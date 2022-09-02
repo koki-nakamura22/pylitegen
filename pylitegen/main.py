@@ -7,7 +7,7 @@ from db.model_gen import gen
 
 def main():
     current_dir = os.path.dirname(__file__)
-    db_file_path = os.path.join(current_dir, 'tweets-collector.db')
+    db_file_path = os.path.join(current_dir, 'test.db')
     con = sqlite3.connect(db_file_path)
 
     table_names = MetaData.select_table_names(con)
