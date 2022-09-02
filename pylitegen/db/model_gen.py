@@ -1,8 +1,8 @@
 import os
 from typing import List
 
-from pylitegen.utils.file import save_as_text
-from pylitegen.utils.string import to_pascal_case
+from utils.file import save_as_text
+from utils.string import to_pascal_case
 from .column import Column
 
 
