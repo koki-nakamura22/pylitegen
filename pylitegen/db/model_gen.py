@@ -1,15 +1,9 @@
 import os
 from typing import List
 
+from pylitegen.utils.file import save_as_text
 from pylitegen.utils.string import to_pascal_case
 from .column import Column
-
-# https://qiita.com/munepi0713/items/82ce7a56aa1b8233fd30
-
-
-def save_as_text(save_path: str, text: str):
-    with open(save_path, mode='w', encoding='utf-8') as f:
-        f.write(text)
 
 
 def gen(table_name: str, columns: List[Column]):
