@@ -1,20 +1,10 @@
 import os
-import re
-from typing import Iterator, List
+from typing import List
 
+from pylitegen.utils.string import to_pascal_case
 from .column import Column
 
 # https://qiita.com/munepi0713/items/82ce7a56aa1b8233fd30
-
-
-def _parse_words(string: str) -> Iterator[str]:
-    for block in re.split(r"[ _-]+", string):
-        yield block
-
-
-def to_pascal_case(string: str) -> str:
-    words_iter = _parse_words(string)
-    return "".join(word.capitalize() for word in words_iter)
 
 
 def save_as_text(save_path: str, text: str):
