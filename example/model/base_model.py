@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 import dataclasses
-from typing import Final, List
+from typing import List
 
 
 class BaseModel(ABC):

@@ -1,3 +1,4 @@
-from .orders import Orders
-from .products import Products
-from .users import Users
+from example.model.base_model import BaseModel
+from example.model.orders import Orders
+from example.model.products import Products
+from example.model.users import Users

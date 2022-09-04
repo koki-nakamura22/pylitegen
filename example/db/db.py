@@ -3,7 +3,7 @@ import sqlite3
 from sqlite3 import Connection
 from typing import Any, Final, List, Tuple, Type
 
-from example.model.model import BaseModel
+from example.model import BaseModel
 
 
 class DB:

@@ -4,9 +4,9 @@ from sqlite3 import Connection
 
 
 class TestDB:
-    def __init__(self) -> None:
-        current_dir = os.path.dirname(__file__)
-        self.filepath = os.path.join(current_dir, "test.db")
+    def __init__(self, dir: str = os.path.dirname(__file__),
+                 filename: str = "test.db") -> None:
+        self.filepath = os.path.join(dir, filename)
 
     def create(self) -> None:
         con = sqlite3.connect(self.filepath)

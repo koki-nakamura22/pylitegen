@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Final, List
 
-from model import BaseModel
+from example.model import BaseModel
 
 
 @dataclass(init=True, eq=True, frozen=True)
