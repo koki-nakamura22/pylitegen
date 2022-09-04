@@ -1,1 +1,1 @@
-from example.script.test_db import TestDB
+from example.script.create_test_db import TestDBCreator
