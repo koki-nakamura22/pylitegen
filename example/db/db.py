@@ -92,8 +92,15 @@ class DB:
     def update(self):
         pass
 
-    def delete(self):
-        pass
+    def delete(self, model_class: Type[BaseModel], condition: dict):
+        if not self.__check_condition(model_class, condition):
+            raise ValueError('Conditions do not match')
+        sql = f"DELETE FROM {model_class.table_name} WHERE 1=1"
+        param_list = list()
+        for k in condition:
+            sql += f" AND {k} = ?"
+            param_list.append(condition[k])
+        self.execute(sql, param_list)
 
     def delete_by_model(self, model: BaseModel):
         sql = f"DELETE FROM {model.table_name} WHERE 1=1"
