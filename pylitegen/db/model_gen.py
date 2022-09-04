@@ -9,6 +9,7 @@ from .column import Column
 def gen(table_name: str, columns: List[Column]):
     exists_any_type = False
     is_use_optional = False
+    pks = list()
     members_code = StringBuilder()
     for c in columns:
         if c.data_type_to_py_type_str() == 'Any':
@@ -20,14 +21,18 @@ def gen(table_name: str, columns: List[Column]):
             is_use_optional = True
             data_type = f"Optional[{c.data_type_to_py_type_str()}]"
 
+        if c.is_pk():
+            pks.append(c.name)
+
         members_code.append_line(f"    {c.name}: {data_type}")
-    members_code.append(f"    table_name: Final[str] = '{table_name}'")
+    members_code.append_line(f"    table_name: Final[str] = '{table_name}'")
+    members_code.append(f"    pk_names: Final[List[str]] = {str(pks)}")
 
     code_str = StringBuilder()
     code_str.append_line(f"from dataclasses import dataclass")
 
     import_typing_str = StringBuilder()
-    import_typing_str.append('from typing import Final')
+    import_typing_str.append('from typing import Final, List')
     if exists_any_type:
         import_typing_str.append(', Any')
     if is_use_optional:
