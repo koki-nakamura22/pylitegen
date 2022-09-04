@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 from utils.file import save_as_text
@@ -22,20 +21,19 @@ def gen(table_name: str, columns: List[Column]):
             data_type = f"Optional[{c.data_type_to_py_type_str()}]"
 
         members_code.append_line(f"    {c.name}: {data_type}")
-    members_code.append(f"    table_name: str = '{table_name}'")
+    members_code.append(f"    table_name: Final[str] = '{table_name}'")
 
     code_str = StringBuilder()
     code_str.append_line(f"from dataclasses import dataclass")
 
-    import_typing_str = 'from typing import '
+    import_typing_str = StringBuilder()
+    import_typing_str.append('from typing import Final')
     if exists_any_type:
-        import_typing_str += 'Any, '
+        import_typing_str.append(', Any')
     if is_use_optional:
-        import_typing_str += 'Optional'
-    import_typing_str = import_typing_str.rstrip().rstrip(',')
+        import_typing_str.append(', Optional')
 
-    if 19 < len(import_typing_str):
-        code_str.append_line(f"{import_typing_str}")
+    code_str.append_line(import_typing_str.to_str())
     code_str.append_line('')
     code_str.append_line('')
     code_str.append_line("@dataclass(init=True, eq=True, frozen=True)")
