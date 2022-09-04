@@ -1,11 +1,14 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Final, List
+
+from model import BaseModel
 
 
 @dataclass(init=True, eq=True, frozen=True)
-class Products:
+class Products(BaseModel):
     id: int
     name: str
     amount: int
-    table_name: Final[str] = 'products'
-    pk_names: Final[List[str]] = ['id']
+    table_name: Final[str] = field(default='products', init=False)
+    pk_names: Final[List[str]] = field(
+        default_factory=lambda: ['id'], init=False)
