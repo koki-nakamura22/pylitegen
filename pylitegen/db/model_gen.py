@@ -6,6 +6,25 @@ from utils.stringbuilder import StringBuilder
 from .column import Column
 
 
+def __gen_base_model():
+    code = """from abc import ABC
+import dataclasses
+from typing import List
+
+class BaseModel(ABC):
+    def values_as_list(self) -> List:
+        val_list = list()
+        members = vars(self)
+        for k in members:
+            val_list.append(members[k])
+        return val_list
+
+    def to_dict(self) -> dict:
+        return dataclasses.asdict(self)
+"""
+    save_as_text(f"model.py", code)
+
+
 def gen(table_name: str, columns: List[Column]):
     exists_any_type = False
     is_use_optional = False
@@ -40,9 +59,12 @@ def gen(table_name: str, columns: List[Column]):
 
     code_str.append_line(import_typing_str.to_str())
     code_str.append_line('')
+    code_str.append_line('from model import BaseModel')
+    code_str.append_line('')
     code_str.append_line('')
     code_str.append_line("@dataclass(init=True, eq=True, frozen=True)")
-    code_str.append_line(f"class {to_pascal_case(table_name)}:")
+    code_str.append_line(f"class {to_pascal_case(table_name)}(BaseModel):")
     code_str.append_line(members_code.to_str())
 
+    __gen_base_model()
     save_as_text(f"{table_name}.py", code_str.to_str())
