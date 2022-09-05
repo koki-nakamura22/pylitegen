@@ -1,5 +1,6 @@
 import path_resolver
 import os
+import sqlite3
 import sys
 import pytest
 from pytest import main
@@ -116,6 +117,30 @@ class TestDB:
     ###################
     # Insert
     ###################
+    @pytest.mark.skip(reason="This test is already done at test_find_data_found.")
+    def test_insert_not_existing_data(self):
+        pass
+
+    def test_insert_duplicate_data(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+
+            with pytest.raises(sqlite3.IntegrityError) as e:
+                transaction.insert(user, False)
+            assert str(
+                e.value) == 'UNIQUE constraint failed: users.id'
+
+    def test_insert_duplicate_data_but_ignore(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+            transaction.insert(user)
+
+            found_user = transaction.find(User, {'id': 1})
+            assert found_user == user
 
     ###################
     # Update
