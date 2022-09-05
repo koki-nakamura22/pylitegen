@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Final, List
+from typing import ClassVar, Final, List
 
 from example.model import BaseModel
 
@@ -10,6 +10,5 @@ class Users(BaseModel):
     name: str
     phone: str
     address: str
-    table_name: Final[str] = field(default='users', init=False)
-    pk_names: Final[List[str]] = field(
-        default_factory=lambda: ['id'], init=False)
+    table_name: ClassVar[str] = 'users'
+    pks: ClassVar[List[str]] = ['id']

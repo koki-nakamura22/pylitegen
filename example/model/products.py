@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Final, List
+from typing import ClassVar, Final, List
 
 from example.model import BaseModel
 
@@ -9,6 +9,5 @@ class Products(BaseModel):
     id: int
     name: str
     amount: int
-    table_name: Final[str] = field(default='products', init=False)
-    pk_names: Final[List[str]] = field(
-        default_factory=lambda: ['id'], init=False)
+    table_name: ClassVar[str] = 'products'
+    pks: ClassVar[List[str]] = ['id']
