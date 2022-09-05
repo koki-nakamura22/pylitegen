@@ -1,4 +1,4 @@
-import path_resolver
+import import_path_resolver
 import os
 import sqlite3
 import sys
