@@ -7,14 +7,16 @@ class BaseModel(ABC):
     table_name: str
     pk_names: List[str]
 
-    def member_names_as_list(self) -> List:
+    @property
+    def member_names(self) -> List:
         member_list = list()
         members = vars(self)
         for k in members:
             member_list.append(k)
         return member_list
 
-    def values_as_list(self) -> List:
+    @property
+    def values(self) -> List:
         val_list = list()
         members = vars(self)
         for k in members:

@@ -81,15 +81,16 @@ class DB:
     # Insert
     ###################
     def insert(self, model: BaseModel, insert_or_ignore: bool = True):
-        params_str = '?, ' * len(model.member_names_as_list())
+        params_str = '?, ' * len(model.member_names)
         params_str.rstrip().rstrip(',')
         or_ignore_str = " OR IGNORE" if insert_or_ignore else ''
         sql = f"INSERT{or_ignore_str} INTO {model.table_name} VALUES ({params_str})"
-        return self.execute(sql, model.values_as_list())
+        return self.execute(sql, model.values)
 
     ###################
 
     def update(self):
+        # Cannot use when there are no primary keys in a table
         pass
 
     def delete(self, model_class: Type[BaseModel], condition: dict):
@@ -106,7 +107,7 @@ class DB:
         sql = f"DELETE FROM {model.table_name} WHERE 1=1"
         param_list = list()
         member_list = model.pk_names if 0 < len(
-            model.pk_names) else model.member_names_as_list()
+            model.pk_names) else model.member_names
         for member_name in member_list:
             sql += f" AND {member_name} = ?"
             param_list.append(getattr(model, member_name))
