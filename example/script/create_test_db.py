@@ -3,7 +3,7 @@ import sqlite3
 from sqlite3 import Connection
 
 
-class TestDBCreator:
+class DBForTestCreator:
     def __init__(self, dir: str = os.path.dirname(__file__),
                  filename: str = "test.db") -> None:
         self.filepath = os.path.join(dir, filename)
@@ -53,7 +53,7 @@ class TestDBCreator:
 
 
 def main():
-    db = TestDBCreator()
+    db = DBForTestCreator()
     db.create()
 
 
