@@ -25,13 +25,9 @@ class DB:
             self,
             model: Type[BaseModel],
             condition: dict) -> bool:
-        model_mambers = list(filter(
-            lambda a: a not in [
-                'table_name',
-                'pks'],
-            model.__annotations__))
+        model_members = model.get_member_names()
         for k in condition.keys():
-            if k not in model_mambers:
+            if k not in model_members:
                 return False
         return True
 
@@ -57,12 +53,12 @@ class DB:
 
     def find_by(self, model_class: Type[BaseModel], condition: dict):
         if not self.__check_condition(model_class, condition):
-            raise ValueError('Conditions do not match')
+            raise ValueError('Conditions and columns do not match')
         return self.__find(model_class, condition)
 
     def where(self, model_class: Type[BaseModel], condition: dict):
         if not self.__check_condition(model_class, condition):
-            raise ValueError('Conditions do not match')
+            raise ValueError('Conditions and columns do not match')
         sql, param_list = QueryBuilder.build_select(model_class, condition)
         # TODO: fetchall or fetchmany
         return self.execute(sql, param_list).fetchall()

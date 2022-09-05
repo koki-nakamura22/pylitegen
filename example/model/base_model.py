@@ -30,8 +30,18 @@ class BaseModel(ABC):
     def class_type(self) -> Type:
         return self.__class__
 
+    @classmethod
+    def get_member_names(cls) -> List[str]:
+        member_names = list()
+        for k, v in cls.__annotations__.items():
+            if not hasattr(v, '__origin__'):
+                member_names.append(k)
+            elif v.__origin__ is not ClassVar:
+                member_names.append(k)
+        return member_names
+
     @property
-    def member_names(self) -> List:
+    def member_names(self) -> List[str]:
         member_list = list()
         members = vars(self)
         for k in members:
