@@ -1,4 +1,4 @@
-from typing import List, Tuple, Type
+from typing import List, Optional, Tuple, Type
 
 from example.model import BaseModel
 
@@ -7,13 +7,14 @@ class QueryBuilder:
     @classmethod
     def build_select(cls,
                      model_class: Type[BaseModel],
-                     condition: dict) -> Tuple[str,
-                                               List]:
-        sql = f"SELECT * FROM {model_class.table_name} WHERE 1=1"
+                     condition: Optional[dict]) -> Tuple[str,
+                                                         List]:
+        sql = f"SELECT * FROM {model_class.table_name} WHERE 1 = 1"
         param_list = list()
-        for k in condition:
-            sql += f" AND {k} = ?"
-            param_list.append(condition[k])
+        if condition is not None:
+            for k in condition:
+                sql += f" AND {k} = ?"
+                param_list.append(condition[k])
         return sql, param_list
 
     @classmethod
@@ -40,7 +41,7 @@ class QueryBuilder:
             param_list.append(v)
         sql = sql.rstrip().rstrip(',')
 
-        sql += "WHERE 1=1"
+        sql += "WHERE 1 = 1"
         for k, v in condition.items():
             sql += f" AND {k}=?"
             param_list.append(v)
@@ -57,7 +58,7 @@ class QueryBuilder:
             param_list.append(v)
         sql = sql.rstrip().rstrip(',')
 
-        sql += "WHERE 1=1"
+        sql += "WHERE 1 = 1"
         model_dict = model.to_dict()
         for pk in model.__class__.pks:
             sql += f" AND {pk}=?"
@@ -69,17 +70,18 @@ class QueryBuilder:
     def build_delete(
             cls,
             model_class: Type[BaseModel],
-            condition: dict) -> Tuple[str, List]:
-        sql = f"DELETE FROM {model_class.table_name} WHERE 1=1"
+            condition: Optional[dict]) -> Tuple[str, List]:
+        sql = f"DELETE FROM {model_class.table_name} WHERE 1 = 1"
         param_list = list()
-        for k in condition:
-            sql += f" AND {k} = ?"
-            param_list.append(condition[k])
+        if condition is not None:
+            for k in condition:
+                sql += f" AND {k} = ?"
+                param_list.append(condition[k])
         return sql, param_list
 
     @classmethod
     def build_delete_by_model(cls, model: BaseModel) -> Tuple[str, List]:
-        sql = f"DELETE FROM {model.__class__.table_name} WHERE 1=1"
+        sql = f"DELETE FROM {model.__class__.table_name} WHERE 1 = 1"
         param_list = list()
         member_list = model.__class__.pks if 0 < len(
             model.__class__.pks) else model.member_names
