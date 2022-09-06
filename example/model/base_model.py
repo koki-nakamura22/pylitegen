@@ -60,24 +60,10 @@ class BaseModel(ABC):
 
     @property
     def member_names(self) -> List[str]:
-        # member_list = list()
-        # members = vars(self)
-        # for k in members:
-        #     if k == '_BaseModel__cache':
-        #         continue
-        #     member_list.append(k)
-        # return member_list
         return list(self.members.keys())
 
     @property
     def values(self) -> List:
-        # val_list = list()
-        # members = vars(self)
-        # for k in members:
-        #     if k == '_BaseModel__cache':
-        #         continue
-        #     val_list.append(members[k])
-        # return val_list
         return list(self.members.values())
 
     def to_dict(self) -> dict:
