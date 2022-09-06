@@ -113,6 +113,45 @@ class TestDB:
     ###################
     # where
     ###################
+    def test_where_data_found(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+            user2 = User(2, 'TestUser2', '123', 'Japan')
+            transaction.insert(user2)
+            user3 = User(3, 'TestUse3', '123', 'Australia')
+            transaction.insert(user3)
+
+            found_users = transaction.where(User, {'address': 'Japan'})
+            assert found_users == user, user2
+
+    def test_where_data_not_found(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+            user2 = User(2, 'TestUser2', '123', 'Japan')
+            transaction.insert(user2)
+            user3 = User(3, 'TestUse3', '123', 'Australia')
+            transaction.insert(user3)
+
+            found_users = transaction.where(User, {'address': 'USA'})
+            assert found_users == []
+
+    def test_where_data_with_no_condition(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            users_to_be_insert = [
+                User(1, 'TestUser', '123', 'Japan'),
+                User(2, 'TestUser2', '123', 'Japan'),
+                User(3, 'TestUse3', '123', 'Australia')
+            ]
+            for u in users_to_be_insert:
+                transaction.insert(u)
+
+            found_users = transaction.where(User, {})
+            assert found_users == users_to_be_insert
 
     ###################
     # Insert

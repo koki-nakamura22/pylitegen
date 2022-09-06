@@ -61,7 +61,11 @@ class DB:
             raise ValueError('Conditions and columns do not match')
         sql, param_list = QueryBuilder.build_select(model_class, condition)
         # TODO: fetchall or fetchmany
-        return self.execute(sql, param_list).fetchall()
+        where_result = self.execute(sql, param_list).fetchall()
+        model_list = []
+        for o in where_result:
+            model_list.append(model_class.get_class_type()(*o))
+        return model_list
 
     ###################
 

@@ -10,7 +10,10 @@ from typing import ClassVar, Dict, List, Type
 class BaseModel(ABC):
     table_name: ClassVar[str]
     pks: ClassVar[List[str]]
-    __cache: dict = field(default_factory=lambda: dict(), init=False)
+    __cache: dict = field(
+        default_factory=lambda: dict(),
+        init=False,
+        compare=False)
 
     def __post_init__(self):
         self.__set_cache()
