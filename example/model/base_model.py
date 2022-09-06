@@ -1,24 +1,30 @@
 from abc import ABC
+from collections import defaultdict
+import copy
 import dataclasses
-from dataclasses import field
-from typing import ClassVar, List, Type
+from dataclasses import dataclass, field
+from typing import ClassVar, Dict, List, Type
 
 
+@dataclass()
 class BaseModel(ABC):
     table_name: ClassVar[str]
     pks: ClassVar[List[str]]
     __cache: dict = field(default_factory=lambda: dict(), init=False)
 
+    def __post_init__(self):
+        self.__set_cache()
+
     def __set_cache(self) -> None:
-        members = vars(self)
+        members = self.members
         for k in members:
-            self.__cache[k] = members[k]
+            self._BaseModel__cache[k] = members[k]  # type: ignore
 
     def __get_data_to_be_updated(self) -> dict:
         data_to_be_updated = dict()
-        members = vars(self)
+        members = self.members
         for k in members:
-            if members[k] != self.__cache[k]:
+            if members[k] != self._BaseModel__cache[k]:  # type: ignore
                 data_to_be_updated[k] = members[k]
         return data_to_be_updated
 
@@ -29,6 +35,15 @@ class BaseModel(ABC):
     @property
     def class_type(self) -> Type:
         return self.__class__
+
+    @property
+    def members(self) -> Dict:
+        excludes = ['_BaseModel__cache']
+        members = copy.deepcopy(vars(self))
+        for k in vars(self):
+            if k in excludes:
+                del members[k]
+        return members
 
     @classmethod
     def get_member_names(cls) -> List[str]:
@@ -42,23 +57,25 @@ class BaseModel(ABC):
 
     @property
     def member_names(self) -> List[str]:
-        member_list = list()
-        members = vars(self)
-        for k in members:
-            if k == 'pks':
-                continue
-            member_list.append(k)
-        return member_list
+        # member_list = list()
+        # members = vars(self)
+        # for k in members:
+        #     if k == '_BaseModel__cache':
+        #         continue
+        #     member_list.append(k)
+        # return member_list
+        return list(self.members.keys())
 
     @property
     def values(self) -> List:
-        val_list = list()
-        members = vars(self)
-        for k in members:
-            if k == 'pks':
-                continue
-            val_list.append(members[k])
-        return val_list
+        # val_list = list()
+        # members = vars(self)
+        # for k in members:
+        #     if k == '_BaseModel__cache':
+        #         continue
+        #     val_list.append(members[k])
+        # return val_list
+        return list(self.members.values())
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)

@@ -33,35 +33,37 @@ class QueryBuilder:
             cls,
             model_class: Type[BaseModel],
             data_to_be_updated: dict,
-            condition: dict) -> Tuple[str, List]:
+            condition: Optional[dict]) -> Tuple[str, List]:
         sql = f"UPDATE FROM {model_class.table_name} SET "
         param_list = list()
         for k, v in data_to_be_updated.items():
-            sql += f"{k}=?, "
+            sql += f"{k} = ?, "
             param_list.append(v)
         sql = sql.rstrip().rstrip(',')
 
-        sql += "WHERE 1 = 1"
-        for k, v in condition.items():
-            sql += f" AND {k}=?"
-            param_list.append(v)
+        if condition is not None:
+            sql += " WHERE 1 = 1"
+            for k, v in condition.items():
+                sql += f" AND {k} = ?"
+                param_list.append(v)
 
         return sql, param_list
 
     @classmethod
     def build_update_by_model(cls, model: BaseModel) -> Tuple[str, List]:
         sql = f"UPDATE FROM {model.__class__.table_name} SET "
-        data_to_be_updated = model.__get_data_to_be_updated()
+        data_to_be_updated = model._BaseModel__get_data_to_be_updated()  # type: ignore
+        pks = model.__class__.pks
         param_list = list()
         for k, v in data_to_be_updated.items():
-            sql += f"{k}={v}, "
+            sql += f"{k} = ?, "
             param_list.append(v)
         sql = sql.rstrip().rstrip(',')
 
-        sql += "WHERE 1 = 1"
+        sql += " WHERE 1 = 1"
         model_dict = model.to_dict()
-        for pk in model.__class__.pks:
-            sql += f" AND {pk}=?"
+        for pk in pks:
+            sql += f" AND {pk} = ?"
             param_list.append(model_dict[pk])
 
         return sql, param_list

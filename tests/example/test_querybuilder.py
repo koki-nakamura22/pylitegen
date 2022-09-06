@@ -44,6 +44,41 @@ class TestQueryBuilder:
     ###################
     # Build Update
     ###################
+    def test_build_update_with_no_condition(self):
+        user = User(1, 'Taro', '12345', 'Japan')
+        data_to_be_updated = {
+            'address': 'Tokyo'
+        }
+        condition = None
+        sql, param_list = QueryBuilder.build_update(
+            User, data_to_be_updated, condition)
+        assert sql == 'UPDATE FROM users SET address = ?'
+        assert param_list == ['Tokyo']
+
+    def test_build_update_with_condition(self):
+        user = User(1, 'Taro', '12345', 'Japan')
+        data_to_be_updated = {
+            'address': 'Tokyo'
+        }
+        condition = {
+            'address': 'Japan'
+        }
+        sql, param_list = QueryBuilder.build_update(
+            User, data_to_be_updated, condition)
+        assert sql == 'UPDATE FROM users SET address = ? WHERE 1 = 1 AND address = ?'
+        assert param_list == ['Tokyo', 'Japan']
+
+    def test_build_update_by_model(self):
+        user = User(1, 'Taro', '12345', 'Japan')
+        user.name = 'Jiro'
+        user.address = 'Australia'
+        sql, param_list = QueryBuilder.build_update_by_model(user)
+        assert sql == "UPDATE FROM users SET name = ?, address = ? WHERE 1 = 1 AND id = ?"
+        assert param_list == ['Jiro', 'Australia', 1]
+
+    @pytest.mark.skip(reason="This case does not happen because runs check outside.")
+    def test_build_update_by_model_changed_pk(self):
+        pass
 
     ###################
     # Build Delete

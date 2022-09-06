@@ -4,7 +4,7 @@ from typing import ClassVar, Final, List, Optional
 from example.model import BaseModel
 
 
-@dataclass(init=True, eq=True, frozen=True)
+@dataclass(init=True, eq=True)
 class UserEditedHistory(BaseModel):
     datetime: str
     note: Optional[str] = None
