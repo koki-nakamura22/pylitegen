@@ -124,7 +124,7 @@ class TestDB:
             transaction.insert(user3)
 
             found_users = transaction.where(User, {'address': 'Japan'})
-            assert found_users == user, user2
+            assert found_users == [user, user2]
 
     def test_where_data_not_found(self):
         db = DB(db_filepath)
@@ -184,6 +184,78 @@ class TestDB:
     ###################
     # Update
     ###################
+    def test_update_with_condition(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            user2 = User(2, 'TestUser2', '123', 'Japan')
+            users_to_be_insert = [
+                user,
+                user2,
+                User(3, 'TestUse3', '123', 'Australia')
+            ]
+            for u in users_to_be_insert:
+                transaction.insert(u)
+
+            transaction.update(User, {'address': 'USA'}, {'address': 'Japan'})
+
+            user.address = user2.address = 'USA'
+
+            found_users = transaction.where(User, {'address': 'USA'})
+            assert found_users == [user, user2]
+
+    def test_update_with_no_condition(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            user2 = User(2, 'TestUser2', '123', 'Australia')
+            user3 = User(3, 'TestUser3', '123', 'India')
+            users_to_be_insert = [user, user2, user3]
+            for u in users_to_be_insert:
+                transaction.insert(u)
+
+            transaction.update(User, {'address': 'USA'}, {})
+
+            user.address = user2.address = user3.address = 'USA'
+
+            found_users = transaction.where(User, {'address': 'USA'})
+            assert found_users == [user, user2, user3]
+
+    @pytest.mark.skip(reason="This case is not needed run because sqlite library throws an error.")
+    def test_update_edited_pk(self):
+        pass
+
+    def test_update_by_model_with_pk(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+
+            user.name = 'Taro'
+            transaction.update_by_model(user)
+
+            user_before_change = transaction.find_by(
+                User, {'name': 'TestUser'})
+            assert user_before_change is None
+            user_after_change = transaction.find_by(User, {'name': 'Taro'})
+            assert user_after_change == user
+
+    def test_update_by_model_with_no_pk(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user_edited_history = UserEditedHistory(
+                '2022/10/31 10:12:34', 'note')
+            transaction.insert(user_edited_history)
+
+            user_edited_history.note = 'aaa'
+            with pytest.raises(ValueError) as e:
+                transaction.update_by_model(user_edited_history)
+            assert str(
+                e.value) == 'Cannot use this function with no primary key model'
+
+    @pytest.mark.skip(reason='This case does not happen because primary key cannot be edited in a model class.')
+    def test_update_by_model_edited_pk(self):
+        pass
 
     ###################
     # Delete

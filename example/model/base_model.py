@@ -43,9 +43,8 @@ class BaseModel(ABC):
     def members(self) -> Dict:
         excludes = ['_BaseModel__cache']
         members = copy.deepcopy(vars(self))
-        for k in vars(self):
-            if k in excludes:
-                del members[k]
+        for keyword in excludes:
+            del members[keyword]
         return members
 
     @classmethod
@@ -67,4 +66,4 @@ class BaseModel(ABC):
         return list(self.members.values())
 
     def to_dict(self) -> dict:
-        return dataclasses.asdict(self)
+        return self.members

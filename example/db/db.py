@@ -87,14 +87,18 @@ class DB:
                condition: dict):
         sql, param_list = QueryBuilder.build_update(
             model_class, data_to_be_updated, condition)
-        return self.execute(sql, param_list)
+        return self.execute(sql, param_list).rowcount
 
     def update_by_model(self, model: BaseModel):
         if len(model.__class__.pks) == 0:
             raise ValueError(
-                'You cannot use this function with no primary key model')
+                'Cannot use this function with no primary key model')
+
         sql, param_list = QueryBuilder.build_update_by_model(model)
-        return self.execute(sql, param_list)
+        r = self.execute(sql, param_list)
+        if 0 < r.rowcount:
+            model._BaseModel__set_cache()  # type: ignore
+        return r.rowcount
     ###################
 
     ###################
