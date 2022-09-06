@@ -34,7 +34,7 @@ class QueryBuilder:
             model_class: Type[BaseModel],
             data_to_be_updated: dict,
             condition: Optional[dict]) -> Tuple[str, List]:
-        sql = f"UPDATE FROM {model_class.table_name} SET "
+        sql = f"UPDATE {model_class.table_name} SET "
         param_list = list()
         for k, v in data_to_be_updated.items():
             sql += f"{k} = ?, "
@@ -51,7 +51,7 @@ class QueryBuilder:
 
     @classmethod
     def build_update_by_model(cls, model: BaseModel) -> Tuple[str, List]:
-        sql = f"UPDATE FROM {model.__class__.table_name} SET "
+        sql = f"UPDATE {model.__class__.table_name} SET "
         data_to_be_updated = model._BaseModel__get_data_to_be_updated()  # type: ignore
         pks = model.__class__.pks
         param_list = list()
