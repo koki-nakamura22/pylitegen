@@ -339,6 +339,34 @@ class TestDB:
     ###################
     # Transaction
     ###################
+    def test_transaction_with_no_commits(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            transaction.insert(User(1, 'TestUser', '123', 'Japan'))
+
+            user_on_tran = transaction.find(User, {'id': 1})
+            assert user_on_tran is not None
+
+            # Cannot get data that was inserted on other transaction
+            with db.transaction_scope() as transaction2:
+                user_on_tran = transaction2.find(User, {
+                    'id': 1})
+                assert user_on_tran is None
+
+    def test_transaction_with_commits(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            transaction.insert(User(1, 'TestUser', '123', 'Japan'))
+
+            user_on_tran = transaction.find(User, {'id': 1})
+            assert user_on_tran is not None
+            transaction.commit()
+
+        with db.transaction_scope() as transaction2:
+            # Data that was inserted on other transaction can be got
+            user_on_tran = transaction2.find(User, {
+                'id': 1})
+            assert user_on_tran is not None
 
 
 if __name__ == '__main__':
