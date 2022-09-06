@@ -72,9 +72,9 @@ class DB:
     ###################
     # Insert
     ###################
-    def insert(self, model: BaseModel, insert_or_ignore: bool = True):
+    def insert(self, model: BaseModel, insert_or_ignore: bool = True) -> int:
         sql, param_list = QueryBuilder.build_insert(model, insert_or_ignore)
-        return self.execute(sql, param_list)
+        return self.execute(sql, param_list).rowcount
 
     ###################
 
@@ -84,12 +84,12 @@ class DB:
     def update(self,
                model_class: Type[BaseModel],
                data_to_be_updated: dict,
-               condition: dict):
+               condition: dict) -> int:
         sql, param_list = QueryBuilder.build_update(
             model_class, data_to_be_updated, condition)
         return self.execute(sql, param_list).rowcount
 
-    def update_by_model(self, model: BaseModel):
+    def update_by_model(self, model: BaseModel) -> int:
         if len(model.__class__.pks) == 0:
             raise ValueError(
                 'Cannot use this function with no primary key model')
