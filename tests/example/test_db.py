@@ -260,6 +260,81 @@ class TestDB:
     ###################
     # Delete
     ###################
+    def test_delete_with_condition(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+
+            found_user = transaction.find(User, {'id': 1})
+            assert found_user is not None
+
+            transaction.delete(User, {"id": 1})
+
+            found_user = transaction.find(User, {'id': 1})
+            assert found_user is None
+
+    def test_delete_with_no_condition(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            users_to_be_insert = [
+                User(1, 'TestUser', '123', 'Japan'),
+                User(2, 'TestUser2', '123', 'Japan'),
+                User(3, 'TestUser3', '123', 'Japan')
+            ]
+            for u in users_to_be_insert:
+                transaction.insert(u)
+
+            found_users = transaction.where(User, {})
+            assert len(found_users) == 3
+
+            transaction.delete(User, {})
+
+            found_users = transaction.where(User, {})
+            assert len(found_users) == 0
+
+    def test_delete_by_model_with_pk(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+
+            found_user = transaction.find(User, {'id': 1})
+            assert found_user is not None
+
+            transaction.delete_by_model(user)
+
+            found_user = transaction.find(User, {'id': 1})
+            assert found_user is None
+
+    def test_delete_by_model_with_no_pk(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user_edited_history = UserEditedHistory(
+                '2022/10/31 10:12:34', 'note')
+            user_edited_histories = [
+                user_edited_history,
+                UserEditedHistory(
+                    '2022/11/01 10:12:34', 'note2'),
+                UserEditedHistory(
+                    '2022/11/02 10:12:34', 'note3'),
+            ]
+            for history in user_edited_histories:
+                transaction.insert(history)
+
+            found_history = transaction.find_by(
+                UserEditedHistory, {'note': 'note'})
+            assert found_history is not None
+            found_histories = transaction.where(UserEditedHistory, {})
+            assert len(found_histories) == 3
+
+            transaction.delete_by_model(user_edited_history)
+
+            found_history = transaction.find_by(
+                UserEditedHistory, {'note': 'note'})
+            assert found_history is None
+            found_histories = transaction.where(UserEditedHistory, {})
+            assert len(found_histories) == 2
 
     ###################
     # Transaction

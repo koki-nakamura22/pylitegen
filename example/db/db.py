@@ -108,18 +108,18 @@ class DB:
         if not self.__check_condition(model_class, condition):
             raise ValueError('Conditions do not match')
         sql, param_list = QueryBuilder.build_delete(model_class, condition)
-        self.execute(sql, param_list)
+        return self.execute(sql, param_list).rowcount
 
     def delete_by_model(self, model: BaseModel):
         sql, param_list = QueryBuilder.build_delete_by_model(model)
-        return self.execute(sql, param_list)
+        return self.execute(sql, param_list).rowcount
+    ###################
 
     def execute(self, sql: str, params: Optional[List] = None):
         if params is None:
             return self.con.execute(sql)
         else:
             return self.con.execute(sql, params)
-    ###################
 
     @contextlib.contextmanager
     def transaction_scope(self):
