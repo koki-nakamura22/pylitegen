@@ -41,9 +41,36 @@ class TestQueryBuilder:
         assert sql == 'INSERT INTO users VALUES (?, ?, ?, ?)'
         assert param_list == [1, 'Taro', '12345', 'Japan']
 
+    def test_build_bulk_insert_ignore(self):
+        users = [
+            User(1, 'Taro', '123', 'Japan'),
+            User(2, 'Jiro', '456', 'Australia'),
+            User(3, 'Saburo', '789', 'USA')
+        ]
+        sql, param_list = QueryBuilder.build_bulk_insert(users)
+        assert sql == 'INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)'
+        param_list_for_testing = []
+        for u in users:
+            param_list_for_testing.extend(u.values)
+        assert param_list == param_list_for_testing
+
+    def test_build_bulk_insert_not_ignore(self):
+        users = [
+            User(1, 'Taro', '123', 'Japan'),
+            User(2, 'Jiro', '456', 'Australia'),
+            User(3, 'Saburo', '789', 'USA')
+        ]
+        sql, param_list = QueryBuilder.build_bulk_insert(users, False)
+        assert sql == 'INSERT INTO users VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)'
+        param_list_for_testing = []
+        for u in users:
+            param_list_for_testing.extend(u.values)
+        assert param_list == param_list_for_testing
+
     ###################
     # Build Update
     ###################
+
     def test_build_update_with_no_condition(self):
         user = User(1, 'Taro', '12345', 'Japan')
         data_to_be_updated = {

@@ -29,6 +29,26 @@ class QueryBuilder:
         return sql, model.values
 
     @classmethod
+    def build_bulk_insert(
+            cls,
+            models: List,
+            insert_or_ignore: bool = True) -> Tuple[str, List]:
+        if len(models) == 0:
+            return "", []
+
+        params_str = '?, ' * len(models[0].member_names)
+        params_str = params_str.rstrip().rstrip(',')
+        or_ignore_str = " OR IGNORE" if insert_or_ignore else ''
+        sql = f"INSERT{or_ignore_str} INTO {models[0].__class__.table_name} VALUES "
+        sql += f"({params_str}), " * len(models)
+        sql = sql.rstrip().rstrip(',')
+
+        param_list = []
+        for model in models:
+            param_list.extend(model.values)
+        return sql, param_list
+
+    @ classmethod
     def build_update(
             cls,
             model_class: Type[BaseModel],
@@ -49,7 +69,7 @@ class QueryBuilder:
 
         return sql, param_list
 
-    @classmethod
+    @ classmethod
     def build_update_by_model(cls, model: BaseModel) -> Tuple[str, List]:
         sql = f"UPDATE {model.__class__.table_name} SET "
         data_to_be_updated = model._BaseModel__get_data_to_be_updated()  # type: ignore
@@ -68,7 +88,7 @@ class QueryBuilder:
 
         return sql, param_list
 
-    @classmethod
+    @ classmethod
     def build_delete(
             cls,
             model_class: Type[BaseModel],
@@ -81,7 +101,7 @@ class QueryBuilder:
                 param_list.append(condition[k])
         return sql, param_list
 
-    @classmethod
+    @ classmethod
     def build_delete_by_model(cls, model: BaseModel) -> Tuple[str, List]:
         sql = f"DELETE FROM {model.__class__.table_name} WHERE 1 = 1"
         param_list = list()

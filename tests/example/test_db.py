@@ -7,7 +7,7 @@ from pytest import main
 from typing import Final
 
 from example.db import DB
-from example.model import User, UserEditedHistory
+from example.model import User, UserEditedHistory, user
 from example.script.create_test_db import DBForTestCreator
 
 currnet_dir: Final[str] = os.path.dirname(__file__)
@@ -181,9 +181,74 @@ class TestDB:
             found_user = transaction.find(User, {'id': 1})
             assert found_user == user
 
+    def test_bulk_insert_with_all_same_type_model(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            users = [
+                User(1, 'Taro', '123', 'Japan'),
+                User(2, 'Jiro', '456', 'Australia'),
+                User(3, 'Saburo', '789', 'USA')
+            ]
+            transaction.bulk_insert(users)
+
+            found_users = transaction.where(User, {})
+            assert found_users == users
+
+    def test_bulk_insert_with_object_not_having_chass_type(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            models = [
+                User(1, 'Taro', '123', 'Japan'),
+                str('test')
+            ]
+            with pytest.raises(ValueError) as e:
+                transaction.bulk_insert(models)
+            assert str(
+                e.value) == 'All parameter models must be inherited BaseModel'
+
+    def test_bulk_insert_with_diferent_types_models(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            models = [
+                User(1, 'Taro', '123', 'Japan'),
+                UserEditedHistory('2022/10/31 12:34:56')
+            ]
+            with pytest.raises(ValueError) as e:
+                transaction.bulk_insert(models)
+            assert str(
+                e.value) == 'Multiple types of models cannot be specified'
+
+    def test_bulk_insert_duplicate_data(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            users = [
+                User(1, 'Taro', '123', 'Japan'),
+                User(2, 'Jiro', '456', 'Australia'),
+                User(2, 'Jiro', '456', 'Australia')
+            ]
+
+            with pytest.raises(sqlite3.IntegrityError) as e:
+                transaction.bulk_insert(users, False)
+            assert str(
+                e.value) == 'UNIQUE constraint failed: users.id'
+
+    def test_bulk_insert_duplicate_data_but_ignore(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user1 = User(1, 'Taro', '123', 'Japan')
+            user2 = User(2, 'Jiro', '456', 'Australia')
+            user3 = User(2, 'Jiro', '456', 'Australia')
+            users = [user1, user2, user3]
+            transaction.bulk_insert(users)
+
+            found_users = transaction.where(User, {})
+            assert len(found_users) == 2
+            assert found_users == [user1, user2]
+
     ###################
     # Update
     ###################
+
     def test_update_with_condition(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
