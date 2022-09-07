@@ -76,6 +76,22 @@ class DB:
         sql, param_list = QueryBuilder.build_insert(model, insert_or_ignore)
         return self.execute(sql, param_list).rowcount
 
+    def bulk_insert(
+            self,
+            models: List,
+            insert_or_ignore: bool = True) -> int:
+        if not all(hasattr(m, 'class_type') for m in models):
+            # BaseModel class has class_type attribute.
+            raise ValueError(
+                'All parameter models must be inherited BaseModel')
+
+        if not all(m.class_type == models[0].class_type for m in models):
+            raise ValueError('Multiple types of models cannot be specified')
+
+        sql, param_list = QueryBuilder.build_bulk_insert(
+            models, insert_or_ignore)
+        return self.execute(sql, param_list).rowcount
+
     ###################
 
     ###################
