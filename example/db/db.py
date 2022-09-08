@@ -1,13 +1,17 @@
 import contextlib
+from logging import getLogger
 import sqlite3
 from sqlite3 import Connection
-from typing import Any, Final, List, Optional, Tuple, Type
+from typing import Final, List, Optional, Type
 
+import example.log
 from example.db.querybuilder import QueryBuilder
 from example.model import BaseModel
 
 
 class DB:
+    log_level: Optional[int] = None
+
     def __init__(self, db_filepath: str) -> None:
         self.db_filepath: Final[str] = db_filepath
         self.con: Final[Connection] = sqlite3.connect(db_filepath)
@@ -132,10 +136,18 @@ class DB:
     ###################
 
     def execute(self, sql: str, params: Optional[List] = None):
-        if params is None:
-            return self.con.execute(sql)
-        else:
-            return self.con.execute(sql, params)
+        r = self.con.execute(
+            sql) if params is None else self.con.execute(sql, params)
+
+        if self.log_level is not None:
+            logger = getLogger(self.__class__.__name__)
+            logger.setLevel(self.log_level)
+            msg = 'sql executed: ' + sql
+            if params is not None and 0 < len(params):
+                msg += ": " + ", ".join(params)
+            logger.info(msg)
+
+        return r
 
     @contextlib.contextmanager
     def transaction_scope(self):

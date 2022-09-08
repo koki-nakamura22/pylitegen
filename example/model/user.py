@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import ClassVar, Final, List, Optional
 
 from example.model import BaseModel
