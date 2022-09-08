@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
-from typing import ClassVar, Final, List, Optional
+from dataclasses import dataclass
+from typing import ClassVar, List, Optional
 
 from example.model import BaseModel
 

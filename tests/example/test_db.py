@@ -8,7 +8,7 @@ from pytest import main
 from typing import Final, final
 
 from example.db import DB
-from example.model import User, UserEditedHistory, user
+from example.model import User, UserEditedHistory
 from example.script.create_test_db import DBForTestCreator
 
 currnet_dir: Final[str] = os.path.dirname(__file__)

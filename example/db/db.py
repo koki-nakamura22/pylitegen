@@ -1,8 +1,8 @@
 import contextlib
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL, Formatter, Logger, StreamHandler, getLogger
+from logging import getLogger
 import sqlite3
 from sqlite3 import Connection
-from typing import Any, Final, List, Optional, Tuple, Type, Union
+from typing import Final, List, Optional, Type
 
 import example.log
 from example.db.querybuilder import QueryBuilder
