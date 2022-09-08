@@ -1,10 +1,11 @@
 import import_path_resolver
+from logging import INFO, WARNING
 import os
 import sqlite3
 import sys
 import pytest
 from pytest import main
-from typing import Final
+from typing import Final, final
 
 from example.db import DB
 from example.model import User, UserEditedHistory, user
@@ -18,6 +19,8 @@ class TestDB:
 
     @classmethod
     def setup_class(cls):
+        if os.path.exists(db_filepath):
+            os.remove(db_filepath)
         db_creator = DBForTestCreator(currnet_dir)
         db_creator.create()
 
@@ -432,6 +435,53 @@ class TestDB:
             user_on_tran = transaction2.find(User, {
                 'id': 1})
             assert user_on_tran is not None
+
+    ###################
+    # Log
+    ###################
+    def test_output_sql_executed_log_with_no_params(self, caplog):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            transaction.log_level = INFO
+            transaction.where(User, {})
+
+            assert len(caplog.records) == 1
+            record = caplog.records[0]
+            assert record.name == 'DB'
+            assert record.levelname == 'INFO'
+            assert record.msg == 'sql executed: SELECT * FROM users WHERE 1 = 1'
+
+    def test_output_sql_executed_log_with_params(self, caplog):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            transaction.log_level = INFO
+            transaction.where(User, {'name': 'Taro', 'address': 'Japan'})
+
+            assert len(caplog.records) == 1
+            record = caplog.records[0]
+            assert record.name == 'DB'
+            assert record.levelname == 'INFO'
+            assert record.msg == 'sql executed: SELECT * FROM users WHERE 1 = 1 AND name = ? AND address = ?: Taro, Japan'
+
+    @pytest.mark.skip(reason="This test is already done at test_output_sql_executed_log_with_no_params and test_output_sql_executed_log_with_params.")
+    def test_not_output_sql_executed_log_with_log_level_info(self, caplog):
+        pass
+
+    def test_not_output_sql_executed_log_with_log_level_warning(self, caplog):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            transaction.log_level = WARNING
+            transaction.where(User, {})
+
+            assert len(caplog.records) == 0
+
+    def test_not_output_sql_executed_log_with_log_level_none(self, caplog):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            transaction.log_level = None
+            transaction.where(User, {})
+
+            assert len(caplog.records) == 0
 
 
 if __name__ == '__main__':
