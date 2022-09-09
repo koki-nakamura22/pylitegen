@@ -39,7 +39,7 @@ class DB:
             self,
             model_type: Type[BaseModel],
             condition: dict) -> bool:
-        return set(model_type.pks) == set(condition.keys())
+        return set(model_type.get_pks()) == set(condition.keys())
 
     ###################
     # Select
@@ -110,7 +110,7 @@ class DB:
         return self.execute(sql, param_list).rowcount
 
     def update_by_model(self, model: BaseModel) -> int:
-        if len(model.__class__.pks) == 0:
+        if len(model.pks) == 0:
             raise ValueError(
                 'Cannot use this function with no primary key model')
 

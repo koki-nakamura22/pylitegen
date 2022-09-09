@@ -11,4 +11,3 @@ class User(BaseModel):
     phone: str
     address: Optional[str] = None
     table_name: ClassVar[str] = 'users'
-    pks: ClassVar[List[str]] = ['id']

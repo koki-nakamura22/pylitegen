@@ -73,7 +73,6 @@ class QueryBuilder:
     def build_update_by_model(cls, model: BaseModel) -> Tuple[str, List]:
         sql = f"UPDATE {model.__class__.table_name} SET "
         data_to_be_updated = model._BaseModel__get_data_to_be_updated()  # type: ignore
-        pks = model.__class__.pks
         param_list = list()
         for k, v in data_to_be_updated.items():
             sql += f"{k} = ?, "
@@ -82,7 +81,7 @@ class QueryBuilder:
 
         sql += " WHERE 1 = 1"
         model_dict = model.to_dict()
-        for pk in pks:
+        for pk in model.pks:
             sql += f" AND {pk} = ?"
             param_list.append(model_dict[pk])
 
@@ -105,8 +104,7 @@ class QueryBuilder:
     def build_delete_by_model(cls, model: BaseModel) -> Tuple[str, List]:
         sql = f"DELETE FROM {model.__class__.table_name} WHERE 1 = 1"
         param_list = list()
-        member_list = model.__class__.pks if 0 < len(
-            model.__class__.pks) else model.member_names
+        member_list = model.pks if 0 < len(model.pks) else model.member_names
         for member_name in member_list:
             sql += f" AND {member_name} = ?"
             param_list.append(getattr(model, member_name))

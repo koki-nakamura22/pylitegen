@@ -9,4 +9,3 @@ class UserEditedHistory(BaseModel):
     datetime: str
     note: Optional[str] = None
     table_name: ClassVar[str] = 'user_edited_histories'
-    pks: ClassVar[List[str]] = []

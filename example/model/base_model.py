@@ -1,13 +1,12 @@
 from abc import ABC
 import copy
 from dataclasses import dataclass, field
-from typing import ClassVar, Dict, List, Type
+from typing import ClassVar, Dict, Final, List, Type
 
 
 @dataclass()
 class BaseModel(ABC):
     table_name: ClassVar[str]
-    pks: ClassVar[List[str]]
     __cache: dict = field(
         default_factory=lambda: dict(),
         init=False,
@@ -36,6 +35,22 @@ class BaseModel(ABC):
     @property
     def class_type(self) -> Type:
         return self.__class__
+
+    @classmethod
+    def get_pks(cls) -> List[str]:
+        if not hasattr(cls, '__pks'):
+            pks = list()
+            for k, v in cls.__annotations__.items():
+                if hasattr(v, '__origin__') and v.__origin__ is Final:
+                    pks.append(k)
+            setattr(cls, '__pks', pks)
+            return pks
+        else:
+            return getattr(cls, '__pks')
+
+    @property
+    def pks(self) -> List[str]:
+        return self.__class__.get_pks()
 
     @property
     def members(self) -> Dict:
