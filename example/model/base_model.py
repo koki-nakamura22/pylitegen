@@ -6,7 +6,7 @@ from typing import ClassVar, Dict, Final, List, Type
 
 @dataclass()
 class BaseModel(ABC):
-    table_name: ClassVar[str]
+    __table_name: ClassVar[str]
     __cache: dict = field(
         default_factory=lambda: dict(),
         init=False,
@@ -35,6 +35,14 @@ class BaseModel(ABC):
     @property
     def class_type(self) -> Type:
         return self.__class__
+
+    @classmethod
+    def get_table_name(cls) -> str:
+        return getattr(cls, f"_{cls.__name__}__table_name")
+
+    @property
+    def table_name(self) -> str:
+        return self.__class__.get_table_name()
 
     @classmethod
     def get_pks(cls) -> List[str]:

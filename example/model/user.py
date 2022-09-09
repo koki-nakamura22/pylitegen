@@ -10,4 +10,4 @@ class User(BaseModel):
     name: str
     phone: str
     address: Optional[str] = None
-    table_name: ClassVar[str] = 'users'
+    __table_name: ClassVar[str] = 'users'

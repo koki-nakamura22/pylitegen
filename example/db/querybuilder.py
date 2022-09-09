@@ -9,7 +9,7 @@ class QueryBuilder:
                      model_class: Type[BaseModel],
                      condition: Optional[dict]) -> Tuple[str,
                                                          List]:
-        sql = f"SELECT * FROM {model_class.table_name} WHERE 1 = 1"
+        sql = f"SELECT * FROM {model_class.get_table_name()} WHERE 1 = 1"
         param_list = list()
         if condition is not None:
             for k in condition:
@@ -25,7 +25,7 @@ class QueryBuilder:
         params_str = '?, ' * len(model.member_names)
         params_str = params_str.rstrip().rstrip(',')
         or_ignore_str = " OR IGNORE" if insert_or_ignore else ''
-        sql = f"INSERT{or_ignore_str} INTO {model.__class__.table_name} VALUES ({params_str})"
+        sql = f"INSERT{or_ignore_str} INTO {model.table_name} VALUES ({params_str})"
         return sql, model.values
 
     @classmethod
@@ -39,7 +39,7 @@ class QueryBuilder:
         params_str = '?, ' * len(models[0].member_names)
         params_str = params_str.rstrip().rstrip(',')
         or_ignore_str = " OR IGNORE" if insert_or_ignore else ''
-        sql = f"INSERT{or_ignore_str} INTO {models[0].__class__.table_name} VALUES "
+        sql = f"INSERT{or_ignore_str} INTO {models[0].table_name} VALUES "
         sql += f"({params_str}), " * len(models)
         sql = sql.rstrip().rstrip(',')
 
@@ -54,7 +54,7 @@ class QueryBuilder:
             model_class: Type[BaseModel],
             data_to_be_updated: dict,
             condition: Optional[dict]) -> Tuple[str, List]:
-        sql = f"UPDATE {model_class.table_name} SET "
+        sql = f"UPDATE {model_class.get_table_name()} SET "
         param_list = list()
         for k, v in data_to_be_updated.items():
             sql += f"{k} = ?, "
@@ -71,7 +71,7 @@ class QueryBuilder:
 
     @ classmethod
     def build_update_by_model(cls, model: BaseModel) -> Tuple[str, List]:
-        sql = f"UPDATE {model.__class__.table_name} SET "
+        sql = f"UPDATE {model.table_name} SET "
         data_to_be_updated = model._BaseModel__get_data_to_be_updated()  # type: ignore
         param_list = list()
         for k, v in data_to_be_updated.items():
@@ -92,7 +92,7 @@ class QueryBuilder:
             cls,
             model_class: Type[BaseModel],
             condition: Optional[dict]) -> Tuple[str, List]:
-        sql = f"DELETE FROM {model_class.table_name} WHERE 1 = 1"
+        sql = f"DELETE FROM {model_class.get_table_name()} WHERE 1 = 1"
         param_list = list()
         if condition is not None:
             for k in condition:
@@ -102,7 +102,7 @@ class QueryBuilder:
 
     @ classmethod
     def build_delete_by_model(cls, model: BaseModel) -> Tuple[str, List]:
-        sql = f"DELETE FROM {model.__class__.table_name} WHERE 1 = 1"
+        sql = f"DELETE FROM {model.table_name} WHERE 1 = 1"
         param_list = list()
         member_list = model.pks if 0 < len(model.pks) else model.member_names
         for member_name in member_list:
