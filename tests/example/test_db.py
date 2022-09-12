@@ -182,9 +182,9 @@ class TestDB:
     def test_find_by_with_only_values(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
-            values = ['Australia']
+            params = ['Australia']
             with pytest.raises(ValueError) as e:
-                transaction.find_by(User, values=values)
+                transaction.find_by(User, params=params)
             assert str(
                 e.value) == 'Both where and values must be passed, or not passed both'
 
@@ -286,9 +286,9 @@ class TestDB:
     def test_where_with_only_values(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
-            values = ['Australia']
+            params = ['Australia']
             with pytest.raises(ValueError) as e:
-                transaction.where(User, values=values)
+                transaction.where(User, params=params)
             assert str(
                 e.value) == 'Both where and values must be passed, or not passed both'
 

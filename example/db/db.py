@@ -54,15 +54,15 @@ class DB:
     def find_by(self,
                 model_class: Type[BaseModel],
                 where: Optional[str] = None,
-                values: Optional[Union[dict,
+                params: Optional[Union[dict,
                                        List]] = None):
-        if (where is None and values is not None) or (
-                where is not None and values is None):
+        if (where is None and params is not None) or (
+                where is not None and params is None):
             raise ValueError(
                 'Both where and values must be passed, or not passed both')
-        if where is not None and values is not None:
+        if where is not None and params is not None:
             sql = QueryBuilder.build_select(model_class, where)
-            r = self.execute(sql, values).fetchone()
+            r = self.execute(sql, params).fetchone()
         else:
             sql = QueryBuilder.build_select(model_class)
             r = self.execute(sql).fetchone()
@@ -71,17 +71,17 @@ class DB:
     def where(self,
               model_class: Type[BaseModel],
               where: Optional[str] = None,
-              values: Optional[Union[dict,
+              params: Optional[Union[dict,
                                      List]] = None):
-        if (where is None and values is not None) or (
-                where is not None and values is None):
+        if (where is None and params is not None) or (
+                where is not None and params is None):
             raise ValueError(
                 'Both where and values must be passed, or not passed both')
 
         # TODO: fetchall or fetchmany
-        if where is not None and values is not None:
+        if where is not None and params is not None:
             sql = QueryBuilder.build_select(model_class, where)
-            r = self.execute(sql, values).fetchall()
+            r = self.execute(sql, params).fetchall()
         else:
             sql = QueryBuilder.build_select(model_class)
             r = self.execute(sql).fetchall()
