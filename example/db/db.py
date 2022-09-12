@@ -169,6 +169,9 @@ class DB:
         sql, param_list = QueryBuilder.build_delete_by_model(model)
         return self.execute(sql, param_list).rowcount
 
+    ###################
+    # Execute
+    ###################
     def execute(self, sql: str, params: Optional[Union[dict, List]] = None):
         r = self.con.execute(
             sql) if params is None else self.con.execute(sql, params)
@@ -183,6 +186,9 @@ class DB:
 
         return r
 
+    ###################
+    # Transaction
+    ###################
     @contextlib.contextmanager
     def transaction_scope(self):
         connection_for_transaction = self.__class__(self.db_filepath)
