@@ -44,19 +44,21 @@ class TestQueryBuilder:
     ###################
     # Build Insert
     ###################
-
+    @pytest.mark.build_insert
     def test_build_insert_ignore(self):
         user = User(1, 'Taro', '12345', 'Japan')
         sql, param_list = QueryBuilder.build_insert(user, True)
         assert sql == 'INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?)'
         assert param_list == [1, 'Taro', '12345', 'Japan']
 
+    @pytest.mark.build_insert
     def test_build_insert_not_ignore(self):
         user = User(1, 'Taro', '12345', 'Japan')
         sql, param_list = QueryBuilder.build_insert(user, False)
         assert sql == 'INSERT INTO users VALUES (?, ?, ?, ?)'
         assert param_list == [1, 'Taro', '12345', 'Japan']
 
+    @pytest.mark.build_bulk_insert
     def test_build_bulk_insert_ignore(self):
         users = [
             User(1, 'Taro', '123', 'Japan'),
@@ -70,6 +72,7 @@ class TestQueryBuilder:
             param_list_for_testing.extend(u.values)
         assert param_list == param_list_for_testing
 
+    @pytest.mark.build_bulk_insert
     def test_build_bulk_insert_not_ignore(self):
         users = [
             User(1, 'Taro', '123', 'Japan'),

@@ -295,11 +295,12 @@ class TestDB:
     ###################
     # Insert
     ###################
-
+    @pytest.mark.insert
     @pytest.mark.skip(reason="This test is already done at test_find_data_found.")
     def test_insert_not_existing_data(self):
         pass
 
+    @pytest.mark.insert
     def test_insert_duplicate_data(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
@@ -311,6 +312,7 @@ class TestDB:
             assert str(
                 e.value) == 'UNIQUE constraint failed: users.id'
 
+    @pytest.mark.insert
     def test_insert_duplicate_data_but_ignore(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
@@ -318,9 +320,10 @@ class TestDB:
             transaction.insert(user)
             transaction.insert(user)
 
-            found_user = transaction.find(User, {'id': 1})
+            found_user = transaction.find(User, 1)
             assert found_user == user
 
+    @pytest.mark.bulk_insert
     def test_bulk_insert_with_all_same_type_model(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
@@ -331,9 +334,10 @@ class TestDB:
             ]
             transaction.bulk_insert(users)
 
-            found_users = transaction.where(User, {})
+            found_users = transaction.where(User)
             assert found_users == users
 
+    @pytest.mark.bulk_insert
     def test_bulk_insert_with_object_not_having_chass_type(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
@@ -346,6 +350,7 @@ class TestDB:
             assert str(
                 e.value) == 'All parameter models must be inherited BaseModel'
 
+    @pytest.mark.bulk_insert
     def test_bulk_insert_with_diferent_types_models(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
@@ -358,6 +363,7 @@ class TestDB:
             assert str(
                 e.value) == 'Multiple types of models cannot be specified'
 
+    @pytest.mark.bulk_insert
     def test_bulk_insert_duplicate_data(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
@@ -372,6 +378,7 @@ class TestDB:
             assert str(
                 e.value) == 'UNIQUE constraint failed: users.id'
 
+    @pytest.mark.bulk_insert
     def test_bulk_insert_duplicate_data_but_ignore(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
@@ -381,7 +388,7 @@ class TestDB:
             users = [user1, user2, user3]
             transaction.bulk_insert(users)
 
-            found_users = transaction.where(User, {})
+            found_users = transaction.where(User)
             assert len(found_users) == 2
             assert found_users == [user1, user2]
 
