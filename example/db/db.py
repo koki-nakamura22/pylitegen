@@ -2,7 +2,7 @@ import contextlib
 from logging import getLogger
 import sqlite3
 from sqlite3 import Connection
-from typing import Final, List, Optional, Type
+from typing import Final, List, Optional, Type, Union
 
 import example.log
 from example.db.querybuilder import QueryBuilder
@@ -25,53 +25,63 @@ class DB:
     def close(self):
         self.con.close()
 
-    def __check_condition(
-            self,
-            model: Type[BaseModel],
-            condition: dict) -> bool:
-        model_members = model.get_member_names()
-        for k in condition.keys():
-            if k not in model_members:
-                return False
-        return True
-
-    def __check_specify_pk(
-            self,
-            model_type: Type[BaseModel],
-            condition: dict) -> bool:
-        return set(model_type.get_pks()) == set(condition.keys())
+    ###################
+    # Validation
+    ###################
+    def __validate_where_and_condition(
+            self, where: Optional[str], condition: Optional[Union[dict, List]] = None):
+        if (where is None and condition is not None) or (
+                where is not None and condition is None):
+            raise ValueError(
+                'Both where and values must be passed, or not passed both')
 
     ###################
     # Select
     ###################
-
-    def __find(self, model_class: Type[BaseModel], condition: dict):
-        sql, param_list = QueryBuilder.build_select(model_class, condition)
-        r = self.execute(sql, param_list).fetchone()
+    def find(self, model_class: Type[BaseModel], *primary_key_values):
+        pks = model_class.get_pks()
+        if len(pks) == 0:
+            raise ValueError(
+                'Cannot use find method because this class does not have any primary keys')
+        if len(primary_key_values) != len(model_class.get_pks()):
+            raise ValueError(
+                'The number of primary keys and primary key values do not match')
+        sql = QueryBuilder.build_select_with_qmark_parameters(model_class, pks)
+        r = self.execute(sql, list(primary_key_values)).fetchone()
         return None if r is None else model_class.get_class_type()(*r)
 
-    def find(self, model_class: Type[BaseModel], condition: dict):
-        if not self.__check_specify_pk(model_class, condition):
-            raise ValueError('Primary keys do not match')
-        return self.__find(model_class, condition)
+    def find_by(self,
+                model_class: Type[BaseModel],
+                where: Optional[str] = None,
+                params: Optional[Union[dict,
+                                       List]] = None):
+        self.__validate_where_and_condition(where, params)
+        if where is not None and params is not None:
+            sql = QueryBuilder.build_select(model_class, where)
+            r = self.execute(sql, params).fetchone()
+        else:
+            sql = QueryBuilder.build_select(model_class)
+            r = self.execute(sql).fetchone()
+        return None if r is None else model_class.get_class_type()(*r)
 
-    def find_by(self, model_class: Type[BaseModel], condition: dict):
-        if not self.__check_condition(model_class, condition):
-            raise ValueError('Conditions and columns do not match')
-        return self.__find(model_class, condition)
+    def where(self,
+              model_class: Type[BaseModel],
+              where: Optional[str] = None,
+              params: Optional[Union[dict,
+                                     List]] = None):
+        self.__validate_where_and_condition(where, params)
 
-    def where(self, model_class: Type[BaseModel], condition: dict):
-        if not self.__check_condition(model_class, condition):
-            raise ValueError('Conditions and columns do not match')
-        sql, param_list = QueryBuilder.build_select(model_class, condition)
         # TODO: fetchall or fetchmany
-        where_result = self.execute(sql, param_list).fetchall()
+        if where is not None and params is not None:
+            sql = QueryBuilder.build_select(model_class, where)
+            r = self.execute(sql, params).fetchall()
+        else:
+            sql = QueryBuilder.build_select(model_class)
+            r = self.execute(sql).fetchall()
         model_list = []
-        for o in where_result:
+        for o in r:
             model_list.append(model_class.get_class_type()(*o))
         return model_list
-
-    ###################
 
     ###################
     # Insert
@@ -97,45 +107,76 @@ class DB:
         return self.execute(sql, param_list).rowcount
 
     ###################
-
-    ###################
     # Update
     ###################
     def update(self,
                model_class: Type[BaseModel],
                data_to_be_updated: dict,
-               condition: dict) -> int:
-        sql, param_list = QueryBuilder.build_update(
-            model_class, data_to_be_updated, condition)
-        return self.execute(sql, param_list).rowcount
+               where: Optional[str] = None,
+               params: Optional[Union[dict, List]] = None) -> int:
+        self.__validate_where_and_condition(where, params)
+
+        sql = QueryBuilder.build_update(
+            model_class, data_to_be_updated, where, params)
+        if params is None:
+            return self.execute(sql, data_to_be_updated).rowcount
+        else:
+            if isinstance(params, dict):
+                params_for_execute = {}
+                params_for_execute.update(data_to_be_updated)
+                params_for_execute.update(params)
+            elif isinstance(params, list):
+                params_for_execute = list()
+                params_for_execute.extend(list(data_to_be_updated.values()))
+                params_for_execute.extend(params)
+            return self.execute(sql, params_for_execute).rowcount
 
     def update_by_model(self, model: BaseModel) -> int:
-        if len(model.pks) == 0:
+        pks = model.pks
+        if len(pks) == 0:
             raise ValueError(
                 'Cannot use this function with no primary key model')
 
-        sql, param_list = QueryBuilder.build_update_by_model(model)
-        r = self.execute(sql, param_list)
+        sql = QueryBuilder.build_update_by_model(model)
+        params = getattr(
+            model, '_BaseModel__get_data_to_be_updated')()
+        for pk in pks:
+            params.update({pk: getattr(model, pk)})
+        r = self.execute(sql, params)
         if 0 < r.rowcount:
             model._BaseModel__set_cache()  # type: ignore
         return r.rowcount
-    ###################
 
     ###################
     # Delete
     ###################
-    def delete(self, model_class: Type[BaseModel], condition: dict):
-        if not self.__check_condition(model_class, condition):
-            raise ValueError('Conditions do not match')
-        sql, param_list = QueryBuilder.build_delete(model_class, condition)
-        return self.execute(sql, param_list).rowcount
+    def delete(
+            self,
+            model_class: Type[BaseModel],
+            where: Optional[str] = None,
+            params: Optional[Union[dict, List]] = None):
+        self.__validate_where_and_condition(where, params)
+
+        sql = QueryBuilder.build_delete(model_class, where)
+        return self.execute(sql, params).rowcount
 
     def delete_by_model(self, model: BaseModel):
-        sql, param_list = QueryBuilder.build_delete_by_model(model)
-        return self.execute(sql, param_list).rowcount
-    ###################
+        sql = QueryBuilder.build_delete_by_model(model)
 
-    def execute(self, sql: str, params: Optional[List] = None):
+        pks = model.pks
+        if 0 < len(pks):
+            params = {}
+            for pk in pks:
+                params[pk] = getattr(model, pk)
+        else:
+            params = model.to_dict()
+
+        return self.execute(sql, params).rowcount
+
+    ###################
+    # Execute
+    ###################
+    def execute(self, sql: str, params: Optional[Union[dict, List]] = None):
         r = self.con.execute(
             sql) if params is None else self.con.execute(sql, params)
 
@@ -143,12 +184,18 @@ class DB:
             logger = getLogger(self.__class__.__name__)
             logger.setLevel(self.log_level)
             msg = 'sql executed: ' + sql
-            if params is not None and 0 < len(params):
-                msg += ": " + ", ".join(params)
+            if params is not None:
+                if isinstance(params, dict):
+                    msg += ": " + ", ".join(params.values())
+                else:
+                    msg += ": " + ", ".join(params)
             logger.info(msg)
 
         return r
 
+    ###################
+    # Transaction
+    ###################
     @contextlib.contextmanager
     def transaction_scope(self):
         connection_for_transaction = self.__class__(self.db_filepath)
