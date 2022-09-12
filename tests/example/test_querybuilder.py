@@ -11,24 +11,40 @@ class TestQueryBuilder:
     ###################
     # Build Select
     ###################
-    def test_build_select_with_no_condition(self):
-        condition = None
-        sql, param_list = QueryBuilder.build_select(User, condition)
-        assert sql == 'SELECT * FROM users WHERE 1 = 1'
-        assert len(param_list) == 0
+    @pytest.mark.build_select_with_qmark_parameters
+    def test_build_select_with_qmark_parameters_with_key(self):
+        keys = ['id']
+        sql = QueryBuilder.build_select_with_qmark_parameters(User, keys)
+        assert sql == 'SELECT * FROM users WHERE id = ?'
 
-    def test_build_select_with_condition(self):
-        condition = {
-            'id': 1,
-            'name': 'Taro'
-        }
-        sql, param_list = QueryBuilder.build_select(User, condition)
-        assert sql == 'SELECT * FROM users WHERE 1 = 1 AND id = ? AND name = ?'
-        assert param_list == [1, 'Taro']
+    @pytest.mark.build_select_with_qmark_parameters
+    def test_build_select_with_qmark_parameters_with_multiple_keys(self):
+        keys = ['id', 'email']
+        sql = QueryBuilder.build_select_with_qmark_parameters(User, keys)
+        assert sql == 'SELECT * FROM users WHERE id = ? AND email = ?'
+
+    @pytest.mark.build_select_with_qmark_parameters
+    def test_build_select_with_qmark_parameters_with_empty_keys(self):
+        keys = []
+        with pytest.raises(ValueError) as e:
+            sql = QueryBuilder.build_select_with_qmark_parameters(User, keys)
+        assert str(e.value) == 'The values of keys must be 1 or more'
+
+    @pytest.mark.build_select
+    def test_build_select_with_where(self):
+        where = 'id = :id AND email = :email'
+        sql = QueryBuilder.build_select(User, where)
+        assert sql == 'SELECT * FROM users WHERE id = :id AND email = :email'
+
+    @pytest.mark.build_select
+    def test_build_select_with_no_where(self):
+        sql = QueryBuilder.build_select(User)
+        assert sql == 'SELECT * FROM users'
 
     ###################
     # Build Insert
     ###################
+
     def test_build_insert_ignore(self):
         user = User(1, 'Taro', '12345', 'Japan')
         sql, param_list = QueryBuilder.build_insert(user, True)

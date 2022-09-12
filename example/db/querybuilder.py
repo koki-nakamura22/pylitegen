@@ -1,3 +1,4 @@
+import re
 from typing import List, Optional, Tuple, Type
 
 from example.model import BaseModel
@@ -5,17 +6,27 @@ from example.model import BaseModel
 
 class QueryBuilder:
     @classmethod
+    def build_select_with_qmark_parameters(
+            cls,
+            model_class: Type[BaseModel],
+            keys: List[str]) -> str:
+        if len(keys) == 0:
+            raise ValueError('The values of keys must be 1 or more')
+
+        sql = f"SELECT * FROM {model_class.get_table_name()} WHERE "
+        for k in keys:
+            sql += f"{k} = ? AND "
+        sql = re.sub(' AND $', '', sql)
+        return sql
+
+    @classmethod
     def build_select(cls,
                      model_class: Type[BaseModel],
-                     condition: Optional[dict]) -> Tuple[str,
-                                                         List]:
-        sql = f"SELECT * FROM {model_class.get_table_name()} WHERE 1 = 1"
-        param_list = list()
-        if condition is not None:
-            for k in condition:
-                sql += f" AND {k} = ?"
-                param_list.append(condition[k])
-        return sql, param_list
+                     where: Optional[str] = None) -> str:
+        sql = f"SELECT * FROM {model_class.get_table_name()}"
+        if where is not None:
+            sql += f" WHERE {where}"
+        return sql
 
     @classmethod
     def build_insert(

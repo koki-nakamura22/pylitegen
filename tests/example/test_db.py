@@ -5,7 +5,7 @@ import sqlite3
 import sys
 import pytest
 from pytest import main
-from typing import Final, final
+from typing import Final
 
 from example.db import DB
 from example.model import User, UserEditedHistory
@@ -35,35 +35,28 @@ class TestDB:
     ###################
     # find
     ###################
+    @pytest.mark.find
     def test_find_data_found(self):
         db = DB(db_filepath)
+        db.log_level = INFO
         with db.transaction_scope() as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
             user2 = User(2, 'TestUser2', '456', 'Japan')
             transaction.insert(user2)
 
-            found_user = transaction.find(User, {'id': 1})
+            found_user = transaction.find(User, 1)
             assert isinstance(found_user, User)
             assert found_user == user
 
+    @pytest.mark.find
     def test_find_data_not_found(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
-            found_user = transaction.find(User, {'id': 1})
+            found_user = transaction.find(User, 1)
             assert found_user is None
 
-    def test_find_primary_keys_and_condition_do_not_match(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
-            user = User(1, 'TestUser', '123', 'Japan')
-            transaction.insert(user)
-
-            with pytest.raises(ValueError) as e:
-                found_user = transaction.find(
-                    User, {'id': 1, 'name': 'TestUser'})
-            assert str(e.value) == 'Primary keys do not match'
-
+    @pytest.mark.find
     def test_find_no_primary_key_model(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
@@ -75,48 +68,131 @@ class TestDB:
                 found_data = transaction.find(
                     UserEditedHistory, {
                         'date': '2022/10/31 10:12:34'})
-            assert str(e.value) == 'Primary keys do not match'
+            assert str(
+                e.value) == 'Cannot use find method because this class does not have any primary keys'
 
-    ###################
-    # find_by
-    ###################
-    def test_find_by_data_found(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
-            user = User(1, 'TestUser', '123', 'Japan')
-            transaction.insert(user)
-            user2 = User(2, 'TestUser2', '456', 'Japan')
-            transaction.insert(user2)
-
-            found_user = transaction.find_by(User, {'address': 'Japan'})
-            assert isinstance(found_user, User)
-            assert found_user == user
-
-    def test_find_by_data_not_found(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
-            user = User(1, 'TestUser', '123', 'Japan')
-            transaction.insert(user)
-            user2 = User(2, 'TestUser2', '456', 'Japan')
-            transaction.insert(user2)
-
-            found_user = transaction.find_by(User, {'address': 'Australia'})
-            assert found_user is None
-
-    def test_find_by_unmatch_condition_keys_and_columns(self):
+    @pytest.mark.find
+    def test_find_primary_keys_and_primary_key_values_do_not_match(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
 
             with pytest.raises(ValueError) as e:
-                found_user = transaction.find_by(User, {'gender': 'male'})
-            assert str(e.value) == 'Conditions and columns do not match'
+                found_user = transaction.find(User, 1, "TestUser")
+            assert str(
+                e.value) == 'The number of primary keys and primary key values do not match'
+
+    @pytest.mark.find
+    def test_find_not_specified_primary_key_values(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+
+            with pytest.raises(ValueError) as e:
+                found_user = transaction.find(User)
+            assert str(
+                e.value) == 'The number of primary keys and primary key values do not match'
+
+    ###################
+    # find_by
+    ###################
+    @pytest.mark.find_by
+    def test_find_by_with_qmark_params_data_found(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+            user2 = User(2, 'TestUser2', '456', 'Japan')
+            transaction.insert(user2)
+
+            where = 'address = ?'
+            values = ['Japan']
+            found_user = transaction.find_by(User, where, values)
+            assert isinstance(found_user, User)
+            assert found_user == user
+
+    @pytest.mark.find_by
+    def test_find_by_with_qmark_params_data_not_found(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+
+            where = 'address = ?'
+            values = ['Australia']
+            found_user = transaction.find_by(User, where, values)
+            assert found_user is None
+
+    @pytest.mark.find_by
+    def test_find_by_with_named_params_data_found(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+            user2 = User(2, 'TestUser2', '456', 'Japan')
+            transaction.insert(user2)
+
+            where = 'address = :address'
+            values = {
+                'address': 'Japan'
+            }
+            found_user = transaction.find_by(User, where, values)
+            assert isinstance(found_user, User)
+            assert found_user == user
+
+    @pytest.mark.find_by
+    def test_find_by_with_named_params_data_not_found(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+
+            where = 'address = :address'
+            values = {
+                'address': 'Australia'
+            }
+            found_user = transaction.find_by(User, where, values)
+            assert found_user is None
+
+    @pytest.mark.find_by
+    def test_find_by_with_not_specified_where_and_values(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+            user2 = User(2, 'TestUser2', '456', 'Japan')
+            transaction.insert(user2)
+
+            found_user = transaction.find_by(User)
+            assert isinstance(found_user, User)
+            assert found_user == user
+
+    @pytest.mark.find_by
+    def test_find_by_with_only_where(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            with pytest.raises(ValueError) as e:
+                transaction.find_by(User, 'address = ?')
+            assert str(
+                e.value) == 'Both where and values must be passed, or not passed both'
+
+    @pytest.mark.find_by
+    def test_find_by_with_only_values(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            values = ['Australia']
+            with pytest.raises(ValueError) as e:
+                transaction.find_by(User, values=values)
+            assert str(
+                e.value) == 'Both where and values must be passed, or not passed both'
 
     ###################
     # where
     ###################
-    def test_where_data_found(self):
+    @pytest.mark.where
+    def test_where_with_qmark_params_data_found(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
@@ -126,10 +202,13 @@ class TestDB:
             user3 = User(3, 'TestUse3', '123', 'Australia')
             transaction.insert(user3)
 
-            found_users = transaction.where(User, {'address': 'Japan'})
+            where = 'address = ?'
+            values = ['Japan']
+            found_users = transaction.where(User, where, values)
             assert found_users == [user, user2]
 
-    def test_where_data_not_found(self):
+    @pytest.mark.where
+    def test_where_with_qmark_params_data_not_found(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
@@ -139,26 +218,84 @@ class TestDB:
             user3 = User(3, 'TestUse3', '123', 'Australia')
             transaction.insert(user3)
 
-            found_users = transaction.where(User, {'address': 'USA'})
+            where = 'address = ?'
+            values = ['USA']
+            found_users = transaction.where(User, where, values)
             assert found_users == []
 
-    def test_where_data_with_no_condition(self):
+    @pytest.mark.where
+    def test_where_with_named_params_data_found(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
-            users_to_be_insert = [
-                User(1, 'TestUser', '123', 'Japan'),
-                User(2, 'TestUser2', '123', 'Japan'),
-                User(3, 'TestUse3', '123', 'Australia')
-            ]
-            for u in users_to_be_insert:
-                transaction.insert(u)
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+            user2 = User(2, 'TestUser2', '123', 'Japan')
+            transaction.insert(user2)
+            user3 = User(3, 'TestUse3', '123', 'Australia')
+            transaction.insert(user3)
 
-            found_users = transaction.where(User, {})
-            assert found_users == users_to_be_insert
+            where = 'address = :address'
+            values = {
+                'address': 'Japan'
+            }
+            found_users = transaction.where(User, where, values)
+            assert found_users == [user, user2]
+
+    @pytest.mark.where
+    def test_where_with_named_params_data_not_found(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+            user2 = User(2, 'TestUser2', '123', 'Japan')
+            transaction.insert(user2)
+            user3 = User(3, 'TestUse3', '123', 'Australia')
+            transaction.insert(user3)
+
+            where = 'address = :address'
+            values = {
+                'address': 'USA'
+            }
+            found_users = transaction.where(User, where, values)
+            assert found_users == []
+
+    @pytest.mark.where
+    def test_where_with_not_specified_where_and_values(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+            user2 = User(2, 'TestUser2', '123', 'Japan')
+            transaction.insert(user2)
+            user3 = User(3, 'TestUse3', '123', 'Australia')
+            transaction.insert(user3)
+
+            found_users = transaction.where(User)
+            assert found_users == [user, user2, user3]
+
+    @pytest.mark.where
+    def test_where_with_only_where(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            with pytest.raises(ValueError) as e:
+                transaction.where(User, 'address = ?')
+            assert str(
+                e.value) == 'Both where and values must be passed, or not passed both'
+
+    @pytest.mark.where
+    def test_where_with_only_values(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            values = ['Australia']
+            with pytest.raises(ValueError) as e:
+                transaction.where(User, values=values)
+            assert str(
+                e.value) == 'Both where and values must be passed, or not passed both'
 
     ###################
     # Insert
     ###################
+
     @pytest.mark.skip(reason="This test is already done at test_find_data_found.")
     def test_insert_not_existing_data(self):
         pass
