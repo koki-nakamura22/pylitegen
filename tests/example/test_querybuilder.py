@@ -141,34 +141,40 @@ class TestQueryBuilder:
     ###################
     # Build Delete
     ###################
-    def test_build_delete_with_no_condition(self):
-        condition = None
-        sql, param_list = QueryBuilder.build_delete(User, condition)
-        assert sql == 'DELETE FROM users WHERE 1 = 1'
-        assert len(param_list) == 0
+    @pytest.mark.build_delete
+    def test_build_delete_with_qmark_params_and_where(self):
+        where = 'id = ? AND email = ?'
+        sql = QueryBuilder.build_delete(User, where)
+        assert sql == 'DELETE FROM users WHERE id = ? AND email = ?'
 
-    def test_build_delete_with_condition(self):
-        condition = {
-            'id': 1,
-            'name': 'Taro'
-        }
-        sql, param_list = QueryBuilder.build_select(User, condition)
-        assert sql == 'SELECT * FROM users WHERE 1 = 1 AND id = ? AND name = ?'
-        assert param_list == [1, 'Taro']
+    @pytest.mark.build_delete
+    def test_build_delete_with_qmark_params_and_no_where(self):
+        sql = QueryBuilder.build_delete(User)
+        assert sql == 'DELETE FROM users'
 
+    @pytest.mark.build_delete
+    def test_build_delete_with_named_params_and_where(self):
+        where = 'id = :id AND email = :email'
+        sql = QueryBuilder.build_delete(User, where)
+        assert sql == 'DELETE FROM users WHERE id = :id AND email = :email'
+
+    @pytest.mark.build_delete
+    @pytest.mark.skip(reason="This case is not needed run because the same as test_build_delete_with_qmark_params_and_no_where.")
+    def test_build_delete_with_named_params_and_no_where(self):
+        pass
+
+    @pytest.mark.build_delete_by_model
     def test_build_delete_by_model_with_pks(self):
         user = User(1, 'Taro', '12345', 'Japan')
-        sql, param_list = QueryBuilder.build_delete_by_model(user)
-        assert sql == 'DELETE FROM users WHERE 1 = 1 AND id = ?'
-        assert param_list == [1]
+        sql = QueryBuilder.build_delete_by_model(user)
+        assert sql == 'DELETE FROM users WHERE id = :id'
 
+    @pytest.mark.build_delete_by_model
     def test_build_delete_by_model_with_no_pks(self):
         user_edited_history = UserEditedHistory(
             '2022/10/31 12:34:56', 'notenotenote')
-        sql, param_list = QueryBuilder.build_delete_by_model(
-            user_edited_history)
-        assert sql == 'DELETE FROM user_edited_histories WHERE 1 = 1 AND datetime = ? AND note = ?'
-        assert param_list == ['2022/10/31 12:34:56', 'notenotenote']
+        sql = QueryBuilder.build_delete_by_model(user_edited_history)
+        assert sql == 'DELETE FROM user_edited_histories WHERE datetime = :datetime AND note = :note'
 
 
 if __name__ == '__main__':

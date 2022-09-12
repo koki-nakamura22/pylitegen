@@ -120,21 +120,17 @@ class QueryBuilder:
     def build_delete(
             cls,
             model_class: Type[BaseModel],
-            condition: Optional[dict]) -> Tuple[str, List]:
-        sql = f"DELETE FROM {model_class.get_table_name()} WHERE 1 = 1"
-        param_list = list()
-        if condition is not None:
-            for k in condition:
-                sql += f" AND {k} = ?"
-                param_list.append(condition[k])
-        return sql, param_list
+            where: Optional[str] = None) -> str:
+        sql = f"DELETE FROM {model_class.get_table_name()}"
+        if where is not None:
+            sql += f" WHERE {where}"
+        return sql
 
     @ classmethod
-    def build_delete_by_model(cls, model: BaseModel) -> Tuple[str, List]:
-        sql = f"DELETE FROM {model.table_name} WHERE 1 = 1"
-        param_list = list()
+    def build_delete_by_model(cls, model: BaseModel) -> str:
+        sql = f"DELETE FROM {model.table_name} WHERE "
         member_list = model.pks if 0 < len(model.pks) else model.member_names
         for member_name in member_list:
-            sql += f" AND {member_name} = ?"
-            param_list.append(getattr(model, member_name))
-        return sql, param_list
+            sql += f"{member_name} = :{member_name} AND "
+        sql = cls.__format_where(sql)
+        return sql

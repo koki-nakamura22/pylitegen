@@ -25,16 +25,6 @@ class DB:
     def close(self):
         self.con.close()
 
-    def __check_condition(
-            self,
-            model: Type[BaseModel],
-            condition: dict) -> bool:
-        model_members = model.get_member_names()
-        for k in condition.keys():
-            if k not in model_members:
-                return False
-        return True
-
     ###################
     # Select
     ###################
@@ -159,15 +149,31 @@ class DB:
     ###################
     # Delete
     ###################
-    def delete(self, model_class: Type[BaseModel], condition: dict):
-        if not self.__check_condition(model_class, condition):
-            raise ValueError('Conditions do not match')
-        sql, param_list = QueryBuilder.build_delete(model_class, condition)
-        return self.execute(sql, param_list).rowcount
+    def delete(
+            self,
+            model_class: Type[BaseModel],
+            where: Optional[str] = None,
+            condition: Optional[Union[dict, List]] = None):
+        if (where is None and condition is not None) or (
+                where is not None and condition is None):
+            raise ValueError(
+                'Both where and values must be passed, or not passed both')
+
+        sql = QueryBuilder.build_delete(model_class, where)
+        return self.execute(sql, condition).rowcount
 
     def delete_by_model(self, model: BaseModel):
-        sql, param_list = QueryBuilder.build_delete_by_model(model)
-        return self.execute(sql, param_list).rowcount
+        sql = QueryBuilder.build_delete_by_model(model)
+
+        pks = model.pks
+        if 0 < len(pks):
+            params = {}
+            for pk in pks:
+                params[pk] = getattr(model, pk)
+        else:
+            params = model.to_dict()
+
+        return self.execute(sql, params).rowcount
 
     ###################
     # Execute

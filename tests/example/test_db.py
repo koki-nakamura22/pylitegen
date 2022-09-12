@@ -492,7 +492,7 @@ class TestDB:
             assert found_users == users
 
     @pytest.mark.update
-    @pytest.mark.skip(reason="This case is not needed run because done in other cases.")
+    @pytest.mark.skip(reason="This case is not needed run because done in other cases")
     def test_update_with_not_specified_where_and_values(self):
         pass
 
@@ -562,53 +562,105 @@ class TestDB:
     ###################
     # Delete
     ###################
-    def test_delete_with_condition(self):
+    @pytest.mark.delete
+    def test_delete_with_qmark_params_and_where(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
 
-            found_user = transaction.find(User, {'id': 1})
+            found_user = transaction.find(User, 1)
             assert found_user is not None
 
-            transaction.delete(User, {"id": 1})
+            where = 'id = ?'
+            condition = [1]
+            transaction.delete(User, where, condition)
 
-            found_user = transaction.find(User, {'id': 1})
+            found_user = transaction.find(User, 1)
             assert found_user is None
 
-    def test_delete_with_no_condition(self):
+    @pytest.mark.delete
+    def test_delete_with_qmark_params_and_no_where(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
-            users_to_be_insert = [
+            users = [
                 User(1, 'TestUser', '123', 'Japan'),
                 User(2, 'TestUser2', '123', 'Japan'),
-                User(3, 'TestUser3', '123', 'Japan')
+                User(3, 'TestUse3', '123', 'Australia')
             ]
-            for u in users_to_be_insert:
+            for u in users:
                 transaction.insert(u)
 
-            found_users = transaction.where(User, {})
+            found_users = transaction.where(User)
             assert len(found_users) == 3
 
-            transaction.delete(User, {})
+            transaction.delete(User)
 
-            found_users = transaction.where(User, {})
+            found_users = transaction.where(User)
             assert len(found_users) == 0
 
+    @pytest.mark.delete
+    def test_delete_with_named_params_and_where(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            user = User(1, 'TestUser', '123', 'Japan')
+            transaction.insert(user)
+
+            found_user = transaction.find(User, 1)
+            assert found_user is not None
+
+            where = 'id = :id'
+            condition = {'id': 1}
+            transaction.delete(User, where, condition)
+
+            found_user = transaction.find(User, 1)
+            assert found_user is None
+
+    @pytest.mark.delete
+    @pytest.mark.skip(reason='This case is not needed run because done in other cases')
+    def test_delete_with_named_params_and_no_where(self):
+        pass
+
+    @pytest.mark.delete
+    @pytest.mark.skip(reason='This case is not needed run because done in other cases')
+    def test_delete_with_not_specified_where_and_values(self):
+        pass
+
+    @pytest.mark.delete
+    def test_delete_by_with_only_where(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            with pytest.raises(ValueError) as e:
+                transaction.delete(User, 'address = ?')
+            assert str(
+                e.value) == 'Both where and values must be passed, or not passed both'
+
+    @pytest.mark.delete
+    def test_delete_with_only_condition(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            condition = ['Australia']
+            with pytest.raises(ValueError) as e:
+                transaction.delete(User, condition=condition)
+            assert str(
+                e.value) == 'Both where and values must be passed, or not passed both'
+
+    @pytest.mark.delete_by_model
     def test_delete_by_model_with_pk(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
 
-            found_user = transaction.find(User, {'id': 1})
+            found_user = transaction.find(User, 1)
             assert found_user is not None
 
             transaction.delete_by_model(user)
 
-            found_user = transaction.find(User, {'id': 1})
+            found_user = transaction.find(User, 1)
             assert found_user is None
 
+    @pytest.mark.delete_by_model
     def test_delete_by_model_with_no_pk(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
@@ -624,18 +676,19 @@ class TestDB:
             for history in user_edited_histories:
                 transaction.insert(history)
 
+            where_for_find_by = 'note = :note'
             found_history = transaction.find_by(
-                UserEditedHistory, {'note': 'note'})
+                UserEditedHistory, where_for_find_by, {'note': 'note'})
             assert found_history is not None
-            found_histories = transaction.where(UserEditedHistory, {})
+            found_histories = transaction.where(UserEditedHistory)
             assert len(found_histories) == 3
 
             transaction.delete_by_model(user_edited_history)
 
             found_history = transaction.find_by(
-                UserEditedHistory, {'note': 'note'})
+                UserEditedHistory, where_for_find_by, {'note': 'note'})
             assert found_history is None
-            found_histories = transaction.where(UserEditedHistory, {})
+            found_histories = transaction.where(UserEditedHistory)
             assert len(found_histories) == 2
 
     ###################
