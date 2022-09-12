@@ -512,7 +512,7 @@ class TestDB:
             with pytest.raises(ValueError) as e:
                 transaction.update(
                     User, {
-                        'name': 'TestUser'}, condition={
+                        'name': 'TestUser'}, params={
                         'id': 1})
             assert str(
                 e.value) == 'Both where and values must be passed, or not passed both'
@@ -573,8 +573,8 @@ class TestDB:
             assert found_user is not None
 
             where = 'id = ?'
-            condition = [1]
-            transaction.delete(User, where, condition)
+            params = [1]
+            transaction.delete(User, where, params)
 
             found_user = transaction.find(User, 1)
             assert found_user is None
@@ -610,8 +610,8 @@ class TestDB:
             assert found_user is not None
 
             where = 'id = :id'
-            condition = {'id': 1}
-            transaction.delete(User, where, condition)
+            params = {'id': 1}
+            transaction.delete(User, where, params)
 
             found_user = transaction.find(User, 1)
             assert found_user is None
@@ -639,9 +639,9 @@ class TestDB:
     def test_delete_with_only_condition(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
-            condition = ['Australia']
+            params = ['Australia']
             with pytest.raises(ValueError) as e:
-                transaction.delete(User, condition=condition)
+                transaction.delete(User, params=params)
             assert str(
                 e.value) == 'Both where and values must be passed, or not passed both'
 

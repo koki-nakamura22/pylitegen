@@ -26,6 +26,16 @@ class DB:
         self.con.close()
 
     ###################
+    # Validation
+    ###################
+    def __validate_where_and_condition(
+            self, where: Optional[str], condition: Optional[Union[dict, List]] = None):
+        if (where is None and condition is not None) or (
+                where is not None and condition is None):
+            raise ValueError(
+                'Both where and values must be passed, or not passed both')
+
+    ###################
     # Select
     ###################
     def find(self, model_class: Type[BaseModel], *primary_key_values):
@@ -45,10 +55,7 @@ class DB:
                 where: Optional[str] = None,
                 params: Optional[Union[dict,
                                        List]] = None):
-        if (where is None and params is not None) or (
-                where is not None and params is None):
-            raise ValueError(
-                'Both where and values must be passed, or not passed both')
+        self.__validate_where_and_condition(where, params)
         if where is not None and params is not None:
             sql = QueryBuilder.build_select(model_class, where)
             r = self.execute(sql, params).fetchone()
@@ -62,10 +69,7 @@ class DB:
               where: Optional[str] = None,
               params: Optional[Union[dict,
                                      List]] = None):
-        if (where is None and params is not None) or (
-                where is not None and params is None):
-            raise ValueError(
-                'Both where and values must be passed, or not passed both')
+        self.__validate_where_and_condition(where, params)
 
         # TODO: fetchall or fetchmany
         if where is not None and params is not None:
@@ -109,26 +113,23 @@ class DB:
                model_class: Type[BaseModel],
                data_to_be_updated: dict,
                where: Optional[str] = None,
-               condition: Optional[Union[dict, List]] = None) -> int:
-        if (where is None and condition is not None) or (
-                where is not None and condition is None):
-            raise ValueError(
-                'Both where and values must be passed, or not passed both')
+               params: Optional[Union[dict, List]] = None) -> int:
+        self.__validate_where_and_condition(where, params)
 
         sql = QueryBuilder.build_update(
-            model_class, data_to_be_updated, where, condition)
-        if condition is None:
+            model_class, data_to_be_updated, where, params)
+        if params is None:
             return self.execute(sql, data_to_be_updated).rowcount
         else:
-            if isinstance(condition, dict):
-                params = {}
-                params.update(data_to_be_updated)
-                params.update(condition)
-            elif isinstance(condition, list):
-                params = list()
-                params.extend(list(data_to_be_updated.values()))
-                params.extend(condition)
-            return self.execute(sql, params).rowcount
+            if isinstance(params, dict):
+                params_for_execute = {}
+                params_for_execute.update(data_to_be_updated)
+                params_for_execute.update(params)
+            elif isinstance(params, list):
+                params_for_execute = list()
+                params_for_execute.extend(list(data_to_be_updated.values()))
+                params_for_execute.extend(params)
+            return self.execute(sql, params_for_execute).rowcount
 
     def update_by_model(self, model: BaseModel) -> int:
         pks = model.pks
@@ -153,14 +154,11 @@ class DB:
             self,
             model_class: Type[BaseModel],
             where: Optional[str] = None,
-            condition: Optional[Union[dict, List]] = None):
-        if (where is None and condition is not None) or (
-                where is not None and condition is None):
-            raise ValueError(
-                'Both where and values must be passed, or not passed both')
+            params: Optional[Union[dict, List]] = None):
+        self.__validate_where_and_condition(where, params)
 
         sql = QueryBuilder.build_delete(model_class, where)
-        return self.execute(sql, condition).rowcount
+        return self.execute(sql, params).rowcount
 
     def delete_by_model(self, model: BaseModel):
         sql = QueryBuilder.build_delete_by_model(model)
