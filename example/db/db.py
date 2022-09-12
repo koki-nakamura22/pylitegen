@@ -186,8 +186,11 @@ class DB:
             logger = getLogger(self.__class__.__name__)
             logger.setLevel(self.log_level)
             msg = 'sql executed: ' + sql
-            if params is not None and 0 < len(params):
-                msg += ": " + ", ".join(params)
+            if params is not None:
+                if isinstance(params, dict):
+                    msg += ": " + ", ".join(params.values())
+                else:
+                    msg += ": " + ", ".join(params)
             logger.info(msg)
 
         return r

@@ -694,79 +694,101 @@ class TestDB:
     ###################
     # Transaction
     ###################
+    @pytest.mark.transaction
     def test_transaction_with_no_commits(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
             transaction.insert(User(1, 'TestUser', '123', 'Japan'))
 
-            user_on_tran = transaction.find(User, {'id': 1})
+            user_on_tran = transaction.find(User, 1)
             assert user_on_tran is not None
 
             # Cannot get data that was inserted on other transaction
             with db.transaction_scope() as transaction2:
-                user_on_tran = transaction2.find(User, {
-                    'id': 1})
+                user_on_tran = transaction2.find(User, 1)
                 assert user_on_tran is None
 
+    @pytest.mark.transaction
     def test_transaction_with_commits(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
             transaction.insert(User(1, 'TestUser', '123', 'Japan'))
 
-            user_on_tran = transaction.find(User, {'id': 1})
+            user_on_tran = transaction.find(User, 1)
             assert user_on_tran is not None
             transaction.commit()
 
         with db.transaction_scope() as transaction2:
             # Data that was inserted on other transaction can be got
-            user_on_tran = transaction2.find(User, {
-                'id': 1})
+            user_on_tran = transaction2.find(User, 1)
             assert user_on_tran is not None
 
     ###################
     # Log
     ###################
+    @pytest.mark.log
     def test_output_sql_executed_log_with_no_params(self, caplog):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
             transaction.log_level = INFO
-            transaction.where(User, {})
+            transaction.where(User)
 
             assert len(caplog.records) == 1
             record = caplog.records[0]
             assert record.name == 'DB'
             assert record.levelname == 'INFO'
-            assert record.msg == 'sql executed: SELECT * FROM users WHERE 1 = 1'
+            assert record.msg == 'sql executed: SELECT * FROM users'
 
-    def test_output_sql_executed_log_with_params(self, caplog):
+    @pytest.mark.log
+    def test_output_sql_executed_log_with_qmark_params(self, caplog):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
             transaction.log_level = INFO
-            transaction.where(User, {'name': 'Taro', 'address': 'Japan'})
+            where = 'name = ? AND address = ?'
+            transaction.where(User, where, ['Taro', 'Japan'])
 
             assert len(caplog.records) == 1
             record = caplog.records[0]
             assert record.name == 'DB'
             assert record.levelname == 'INFO'
-            assert record.msg == 'sql executed: SELECT * FROM users WHERE 1 = 1 AND name = ? AND address = ?: Taro, Japan'
+            assert record.msg == 'sql executed: SELECT * FROM users WHERE name = ? AND address = ?: Taro, Japan'
 
+    @pytest.mark.log
+    def test_output_sql_executed_log_with_named_params(self, caplog):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            transaction.log_level = INFO
+            where = 'name = :name AND address = :address'
+            transaction.where(
+                User, where, {
+                    'name': 'Taro', 'address': 'Japan'})
+
+            assert len(caplog.records) == 1
+            record = caplog.records[0]
+            assert record.name == 'DB'
+            assert record.levelname == 'INFO'
+            assert record.msg == 'sql executed: SELECT * FROM users WHERE name = :name AND address = :address: Taro, Japan'
+
+    @pytest.mark.log
     @pytest.mark.skip(reason="This test is already done at test_output_sql_executed_log_with_no_params and test_output_sql_executed_log_with_params.")
     def test_not_output_sql_executed_log_with_log_level_info(self, caplog):
         pass
 
+    @pytest.mark.log
     def test_not_output_sql_executed_log_with_log_level_warning(self, caplog):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
             transaction.log_level = WARNING
-            transaction.where(User, {})
+            transaction.where(User)
 
             assert len(caplog.records) == 0
 
+    @pytest.mark.log
     def test_not_output_sql_executed_log_with_log_level_none(self, caplog):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
             transaction.log_level = None
-            transaction.where(User, {})
+            transaction.where(User)
 
             assert len(caplog.records) == 0
 
