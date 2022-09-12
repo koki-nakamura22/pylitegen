@@ -38,7 +38,6 @@ class DB:
     ###################
     # Select
     ###################
-
     def find(self, model_class: Type[BaseModel], *primary_key_values):
         pks = model_class.get_pks()
         if len(pks) == 0:
@@ -91,8 +90,6 @@ class DB:
         return model_list
 
     ###################
-
-    ###################
     # Insert
     ###################
     def insert(self, model: BaseModel, insert_or_ignore: bool = True) -> int:
@@ -116,29 +113,48 @@ class DB:
         return self.execute(sql, param_list).rowcount
 
     ###################
-
-    ###################
     # Update
     ###################
     def update(self,
                model_class: Type[BaseModel],
                data_to_be_updated: dict,
-               condition: dict) -> int:
-        sql, param_list = QueryBuilder.build_update(
-            model_class, data_to_be_updated, condition)
-        return self.execute(sql, param_list).rowcount
+               where: Optional[str] = None,
+               condition: Optional[Union[dict, List]] = None) -> int:
+        if (where is None and condition is not None) or (
+                where is not None and condition is None):
+            raise ValueError(
+                'Both where and values must be passed, or not passed both')
+
+        sql = QueryBuilder.build_update(
+            model_class, data_to_be_updated, where, condition)
+        if condition is None:
+            return self.execute(sql, data_to_be_updated).rowcount
+        else:
+            if isinstance(condition, dict):
+                params = {}
+                params.update(data_to_be_updated)
+                params.update(condition)
+            elif isinstance(condition, list):
+                params = list()
+                params.extend(list(data_to_be_updated.values()))
+                params.extend(condition)
+            return self.execute(sql, params).rowcount
 
     def update_by_model(self, model: BaseModel) -> int:
-        if len(model.pks) == 0:
+        pks = model.pks
+        if len(pks) == 0:
             raise ValueError(
                 'Cannot use this function with no primary key model')
 
-        sql, param_list = QueryBuilder.build_update_by_model(model)
-        r = self.execute(sql, param_list)
+        sql = QueryBuilder.build_update_by_model(model)
+        params = getattr(
+            model, '_BaseModel__get_data_to_be_updated')()
+        for pk in pks:
+            params.update({pk: getattr(model, pk)})
+        r = self.execute(sql, params)
         if 0 < r.rowcount:
             model._BaseModel__set_cache()  # type: ignore
         return r.rowcount
-    ###################
 
     ###################
     # Delete
@@ -152,7 +168,6 @@ class DB:
     def delete_by_model(self, model: BaseModel):
         sql, param_list = QueryBuilder.build_delete_by_model(model)
         return self.execute(sql, param_list).rowcount
-    ###################
 
     def execute(self, sql: str, params: Optional[Union[dict, List]] = None):
         r = self.con.execute(

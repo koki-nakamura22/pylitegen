@@ -1,10 +1,20 @@
 import re
-from typing import List, Optional, Tuple, Type
+from typing import List, Optional, Tuple, Type, Union
 
 from example.model import BaseModel
 
 
 class QueryBuilder:
+    ###################
+    # Utils
+    ###################
+    @classmethod
+    def __format_where(cls, sql: str) -> str:
+        return re.sub(' AND $', '', sql)
+
+    ###################
+    # Select
+    ###################
     @classmethod
     def build_select_with_qmark_parameters(
             cls,
@@ -16,7 +26,7 @@ class QueryBuilder:
         sql = f"SELECT * FROM {model_class.get_table_name()} WHERE "
         for k in keys:
             sql += f"{k} = ? AND "
-        sql = re.sub(' AND $', '', sql)
+        sql = cls.__format_where(sql)
         return sql
 
     @classmethod
@@ -28,6 +38,9 @@ class QueryBuilder:
             sql += f" WHERE {where}"
         return sql
 
+    ###################
+    # Insert
+    ###################
     @classmethod
     def build_insert(
             cls,
@@ -59,45 +72,50 @@ class QueryBuilder:
             param_list.extend(model.values)
         return sql, param_list
 
+    ###################
+    # Update
+    ###################
     @ classmethod
     def build_update(
             cls,
             model_class: Type[BaseModel],
             data_to_be_updated: dict,
-            condition: Optional[dict]) -> Tuple[str, List]:
+            where: Optional[str] = None,
+            condition: Optional[Union[dict, List]] = None) -> str:
         sql = f"UPDATE {model_class.get_table_name()} SET "
-        param_list = list()
-        for k, v in data_to_be_updated.items():
-            sql += f"{k} = ?, "
-            param_list.append(v)
+
+        for k in data_to_be_updated:
+            if where is None or isinstance(condition, dict):
+                sql += f"{k} = :{k}, "
+            else:
+                sql += f"{k} = ?, "
         sql = sql.rstrip().rstrip(',')
 
-        if condition is not None:
-            sql += " WHERE 1 = 1"
-            for k, v in condition.items():
-                sql += f" AND {k} = ?"
-                param_list.append(v)
+        if where is not None:
+            sql += f" WHERE {where}"
 
-        return sql, param_list
+        return sql
 
     @ classmethod
-    def build_update_by_model(cls, model: BaseModel) -> Tuple[str, List]:
+    def build_update_by_model(cls, model: BaseModel) -> str:
         sql = f"UPDATE {model.table_name} SET "
-        data_to_be_updated = model._BaseModel__get_data_to_be_updated()  # type: ignore
-        param_list = list()
-        for k, v in data_to_be_updated.items():
-            sql += f"{k} = ?, "
-            param_list.append(v)
+
+        data_to_be_updated = getattr(
+            model, '_BaseModel__get_data_to_be_updated')()
+        for k, _ in data_to_be_updated.items():
+            sql += f"{k} = :{k}, "
         sql = sql.rstrip().rstrip(',')
 
-        sql += " WHERE 1 = 1"
-        model_dict = model.to_dict()
+        sql += " WHERE "
         for pk in model.pks:
-            sql += f" AND {pk} = ?"
-            param_list.append(model_dict[pk])
+            sql += f"{pk} = :{pk} AND "
+        sql = cls.__format_where(sql)
 
-        return sql, param_list
+        return sql
 
+    ###################
+    # Delete
+    ###################
     @ classmethod
     def build_delete(
             cls,

@@ -89,38 +89,50 @@ class TestQueryBuilder:
     ###################
     # Build Update
     ###################
-
-    def test_build_update_with_no_condition(self):
-        user = User(1, 'Taro', '12345', 'Japan')
+    @pytest.mark.build_update
+    def test_build_update_with_qmark_params_and_where(self):
         data_to_be_updated = {
             'address': 'Tokyo'
         }
-        condition = None
-        sql, param_list = QueryBuilder.build_update(
-            User, data_to_be_updated, condition)
-        assert sql == 'UPDATE users SET address = ?'
-        assert param_list == ['Tokyo']
+        where = 'address = ?'
+        condition = ['USA']
+        sql = QueryBuilder.build_update(
+            User, data_to_be_updated, where, condition)
+        assert sql == "UPDATE users SET address = ? WHERE address = ?"
 
-    def test_build_update_with_condition(self):
-        user = User(1, 'Taro', '12345', 'Japan')
+    @pytest.mark.build_update
+    def test_build_update_with_qmark_params_and_no_where(self):
         data_to_be_updated = {
             'address': 'Tokyo'
         }
+        sql = QueryBuilder.build_update(User, data_to_be_updated)
+        assert sql == "UPDATE users SET address = :address"
+
+    @pytest.mark.build_update
+    def test_build_update_with_named_params_and_where(self):
+        data_to_be_updated = {
+            'address': 'Tokyo'
+        }
+        where = 'address = :p_address'
         condition = {
-            'address': 'Japan'
+            'p_address': 'USA'
         }
-        sql, param_list = QueryBuilder.build_update(
-            User, data_to_be_updated, condition)
-        assert sql == 'UPDATE users SET address = ? WHERE 1 = 1 AND address = ?'
-        assert param_list == ['Tokyo', 'Japan']
+        sql = QueryBuilder.build_update(
+            User, data_to_be_updated, where, condition)
+        assert sql == "UPDATE users SET address = :address WHERE address = :p_address"
 
+    @pytest.mark.build_update
+    @pytest.mark.skip(reason="This case is not needed run because the same as test_build_update_with_qmark_params_and_no_where.")
+    def test_build_update_with_named_params_and_no_where(self):
+        pass
+
+    @pytest.mark.build_update_by_model
     def test_build_update_by_model(self):
         user = User(1, 'Taro', '12345', 'Japan')
         user.name = 'Jiro'
         user.address = 'Australia'
-        sql, param_list = QueryBuilder.build_update_by_model(user)
-        assert sql == "UPDATE users SET name = ?, address = ? WHERE 1 = 1 AND id = ?"
-        assert param_list == ['Jiro', 'Australia', 1]
+        sql = QueryBuilder.build_update_by_model(user)
+        assert sql == "UPDATE users SET name = :name, address = :address WHERE id = :id"
 
     @pytest.mark.skip(reason="This case does not happen because runs check outside.")
     def test_build_update_by_model_changed_pk(self):

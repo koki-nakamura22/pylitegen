@@ -8,7 +8,7 @@ from pytest import main
 from typing import Final
 
 from example.db import DB
-from example.model import User, UserEditedHistory
+from example.model import User, UserEditedHistory, user
 from example.script.create_test_db import DBForTestCreator
 
 currnet_dir: Final[str] = os.path.dirname(__file__)
@@ -395,8 +395,8 @@ class TestDB:
     ###################
     # Update
     ###################
-
-    def test_update_with_condition(self):
+    @pytest.mark.update
+    def test_update_with_qmark_params_and_where(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
@@ -409,34 +409,120 @@ class TestDB:
             for u in users_to_be_insert:
                 transaction.insert(u)
 
-            transaction.update(User, {'address': 'USA'}, {'address': 'Japan'})
+            where_for_update = 'address = ?'
+            r = transaction.update(
+                User,
+                {'address': 'USA'},
+                where_for_update,
+                ['Japan'])
 
+            where_for_where = 'address = :address'
+            found_users = transaction.where(
+                User, where_for_where, {'address': 'USA'})
             user.address = user2.address = 'USA'
-
-            found_users = transaction.where(User, {'address': 'USA'})
             assert found_users == [user, user2]
 
-    def test_update_with_no_condition(self):
+    @pytest.mark.update
+    def test_update_with_qmark_params_and_no_where(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            users = [
+                User(1, 'TestUser', '123', 'Japan'),
+                User(2, 'TestUser2', '123', 'Japan'),
+                User(3, 'TestUse3', '123', 'Australia')
+            ]
+            for u in users:
+                transaction.insert(u)
+
+            transaction.update(
+                User,
+                {'address': 'Australia'})
+
+            found_users = transaction.where(User)
+            for u in users:
+                u.address = 'Australia'
+            assert found_users == users
+
+    @pytest.mark.update
+    def test_update_with_named_params_and_where(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
-            user2 = User(2, 'TestUser2', '123', 'Australia')
-            user3 = User(3, 'TestUser3', '123', 'India')
-            users_to_be_insert = [user, user2, user3]
+            user2 = User(2, 'TestUser2', '123', 'Japan')
+            users_to_be_insert = [
+                user,
+                user2,
+                User(3, 'TestUse3', '123', 'Australia')
+            ]
             for u in users_to_be_insert:
                 transaction.insert(u)
 
-            transaction.update(User, {'address': 'USA'}, {})
+            where_for_update = 'address = :p_address'
+            r = transaction.update(
+                User,
+                {'address': 'USA'},
+                where_for_update,
+                {'p_address': 'Japan'})
 
-            user.address = user2.address = user3.address = 'USA'
+            where_for_where = 'address = :address'
+            found_users = transaction.where(
+                User, where_for_where, {'address': 'USA'})
+            user.address = user2.address = 'USA'
+            assert found_users == [user, user2]
 
-            found_users = transaction.where(User, {'address': 'USA'})
-            assert found_users == [user, user2, user3]
+    @pytest.mark.update
+    def test_update_with_named_params_and_no_where(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            users = [
+                User(1, 'TestUser', '123', 'Japan'),
+                User(2, 'TestUser2', '123', 'Japan'),
+                User(3, 'TestUse3', '123', 'Australia')
+            ]
+            for u in users:
+                transaction.insert(u)
 
+            r = transaction.update(
+                User,
+                {'address': 'Canada'})
+
+            found_users = transaction.where(User)
+            for u in users:
+                u.address = 'Canada'
+            assert found_users == users
+
+    @pytest.mark.update
+    @pytest.mark.skip(reason="This case is not needed run because done in other cases.")
+    def test_update_with_not_specified_where_and_values(self):
+        pass
+
+    @pytest.mark.update
+    def test_update_with_only_where(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            with pytest.raises(ValueError) as e:
+                transaction.update(User, {'name': 'TestUser'}, 'id = ?')
+            assert str(
+                e.value) == 'Both where and values must be passed, or not passed both'
+
+    @pytest.mark.update
+    def test_update_with_only_condition(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            with pytest.raises(ValueError) as e:
+                transaction.update(
+                    User, {
+                        'name': 'TestUser'}, condition={
+                        'id': 1})
+            assert str(
+                e.value) == 'Both where and values must be passed, or not passed both'
+
+    @pytest.mark.update
     @pytest.mark.skip(reason="This case is not needed run because sqlite library throws an error.")
     def test_update_edited_pk(self):
         pass
 
+    @pytest.mark.update_by_model
     def test_update_by_model_with_pk(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
@@ -446,12 +532,15 @@ class TestDB:
             user.name = 'Taro'
             transaction.update_by_model(user)
 
+            where = 'name = :name'
             user_before_change = transaction.find_by(
-                User, {'name': 'TestUser'})
+                User, where, {'name': 'TestUser'})
             assert user_before_change is None
-            user_after_change = transaction.find_by(User, {'name': 'Taro'})
+            user_after_change = transaction.find_by(
+                User, where, {'name': 'Taro'})
             assert user_after_change == user
 
+    @pytest.mark.update_by_model
     def test_update_by_model_with_no_pk(self):
         db = DB(db_filepath)
         with db.transaction_scope() as transaction:
@@ -465,6 +554,7 @@ class TestDB:
             assert str(
                 e.value) == 'Cannot use this function with no primary key model'
 
+    @pytest.mark.update_by_model
     @pytest.mark.skip(reason='This case does not happen because primary key cannot be edited in a model class.')
     def test_update_by_model_edited_pk(self):
         pass
