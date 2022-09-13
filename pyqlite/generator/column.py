@@ -1,15 +1,15 @@
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Final, Optional
 
 
 @dataclass(init=True, eq=True, frozen=True)
 class Column:
-    column_index: int
-    name: str
-    data_type: str
-    notnull: bool
-    default_value: Optional[Any]
-    pk: int
+    column_index: Final[int]
+    name: Final[str]
+    data_type: Final[str]
+    notnull: Final[bool]
+    default_value: Final[Optional[Any]]
+    pk: Final[int]
 
     def is_not_null(self) -> bool:
         return self.notnull == 1
@@ -22,7 +22,6 @@ class Column:
             'TEXT': 'str',
             'NUMERIC': 'Any',
             'INTEGER': 'int',
-            'INT': 'int',
             'REAL': 'float',
             'NULL': 'Any',
         }
