@@ -9,7 +9,7 @@ from typing import Final
 
 from pyqlite.db import DB
 from example.model import User, UserEditedHistory
-from example.script.create_test_db import DBForTestCreator
+from tests.create_test_db import DBForTestCreator
 
 currnet_dir: Final[str] = os.path.dirname(__file__)
 db_filepath: Final[str] = os.path.join(currnet_dir, 'test.db')
