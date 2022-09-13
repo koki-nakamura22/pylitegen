@@ -4,7 +4,7 @@ from typing import List
 from .column import Column
 
 
-class MetaData:
+class DBMetaData:
     @classmethod
     def select_table_names(cls, connection: Connection) -> List[str]:
         cur = connection.execute(

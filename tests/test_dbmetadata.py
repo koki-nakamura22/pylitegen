@@ -7,14 +7,14 @@ from typing import Final
 
 import tests.import_path_resolver
 from pyqlite.generator.column import Column
-from pyqlite.generator.metadata import MetaData
+from pyqlite.generator.dbmetadata import DBMetaData
 from tests.create_test_db import DBForTestCreator
 
 currnet_dir: Final[str] = os.path.dirname(__file__)
 db_filepath: Final[str] = os.path.join(currnet_dir, 'test.db')
 
 
-class TestMetaData:
+class TestDBMetaData:
     @classmethod
     def setup_class(cls):
         if os.path.exists(db_filepath):
@@ -27,18 +27,18 @@ class TestMetaData:
         if os.path.exists(db_filepath):
             os.remove(db_filepath)
 
-    @pytest.mark.metadata
+    @pytest.mark.dbmetadata
     def test_select_table_names(self):
         con = sqlite3.connect(db_filepath)
-        got_table_names = MetaData.select_table_names(con)
+        got_table_names = DBMetaData.select_table_names(con)
         expected_table_names = ['users', 'user_edited_histories']
         assert got_table_names == expected_table_names
 
-    @pytest.mark.metadata
+    @pytest.mark.dbmetadata
     def test_select_columns_metadata_with_pk_column(self):
         con = sqlite3.connect(db_filepath)
         table_name = 'users'
-        got_columns = MetaData.select_columns_metadata(con, table_name)
+        got_columns = DBMetaData.select_columns_metadata(con, table_name)
 
         expected_columns = [
             Column(0, 'id', 'INTEGER', True, None, 1),
@@ -48,11 +48,11 @@ class TestMetaData:
         ]
         assert set(got_columns) == set(expected_columns)
 
-    @pytest.mark.metadata
+    @pytest.mark.dbmetadata
     def test_select_columns_metadata_with_no_pk_column(self):
         con = sqlite3.connect(db_filepath)
         table_name = 'user_edited_histories'
-        got_columns = MetaData.select_columns_metadata(con, table_name)
+        got_columns = DBMetaData.select_columns_metadata(con, table_name)
 
         expected_columns = [
             Column(0, 'datetime', 'TEXT', True, None, 0),
