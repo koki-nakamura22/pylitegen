@@ -1,9 +1,9 @@
 from typing import List
 
-from utils.file import save_as_text
-from utils.string import to_pascal_case
-from utils.stringbuilder import StringBuilder
-from .column import Column
+from pyqlite.utils.file import save_as_text
+from pyqlite.utils.string import to_pascal_case
+from pyqlite.utils.stringbuilder import StringBuilder
+from pyqlite.generator.column import Column
 
 
 def __gen_base_model():
@@ -25,7 +25,7 @@ class BaseModel(ABC):
     save_as_text(f"model.py", code)
 
 
-def gen(table_name: str, columns: List[Column]):
+def generate(table_name: str, columns: List[Column]):
     exists_any_type = False
     is_use_optional = False
     pks = list()
