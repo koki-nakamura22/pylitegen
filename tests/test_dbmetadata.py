@@ -31,8 +31,13 @@ class TestDBMetaData:
     def test_select_table_names(self):
         con = sqlite3.connect(db_filepath)
         got_table_names = DBMetaData.select_table_names(con)
-        expected_table_names = ['users', 'user_edited_histories']
-        assert got_table_names == expected_table_names
+        expected_table_names = [
+            'users',
+            'user_edited_histories',
+            'all_optional_columns',
+            'backup_users'
+        ]
+        assert set(got_table_names) == set(expected_table_names)
 
     @pytest.mark.dbmetadata
     def test_select_columns_metadata_with_pk_column(self):

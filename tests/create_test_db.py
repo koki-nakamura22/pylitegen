@@ -12,6 +12,8 @@ class DBForTestCreator:
         con = sqlite3.connect(self.filepath)
         self.__create_users_table(con)
         self.__create_user_edited_histories_table(con)
+        self.__create_all_optional_columns_table(con)
+        self.__create_products_table(con)
         con.commit()
 
     def __create_users_table(self, con: Connection) -> None:
@@ -30,6 +32,27 @@ class DBForTestCreator:
         (
             datetime text not null,
             note text
+        )
+        """
+        con.execute(sql)
+
+    def __create_all_optional_columns_table(self, con: Connection) -> None:
+        sql = """CREATE TABLE IF NOT EXISTS all_optional_columns
+        (
+            col1 text,
+            col2 integer,
+            col3 real
+        )
+        """
+        con.execute(sql)
+
+    def __create_products_table(self, con: Connection) -> None:
+        sql = """CREATE TABLE IF NOT EXISTS backup_users
+        (
+            id integer not null primary key,
+            name text,
+            phone text,
+            address text
         )
         """
         con.execute(sql)
