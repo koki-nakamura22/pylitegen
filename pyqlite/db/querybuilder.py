@@ -1,7 +1,7 @@
 import re
 from typing import List, Optional, Tuple, Type, Union
 
-from example.model import BaseModel
+from pyqlite.model import BaseModel
 
 
 class QueryBuilder:

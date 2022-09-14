@@ -2,8 +2,8 @@ import sys
 import pytest
 from pytest import main
 
-import import_path_resolver
-from example.db import QueryBuilder
+import tests.import_path_resolver
+from pyqlite.db import QueryBuilder
 from example.model import User, UserEditedHistory
 
 

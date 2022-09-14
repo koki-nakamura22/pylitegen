@@ -4,9 +4,9 @@ import sqlite3
 from sqlite3 import Connection
 from typing import Final, List, Optional, Type, Union
 
-import example.log
-from example.db.querybuilder import QueryBuilder
-from example.model import BaseModel
+import pyqlite.log
+from pyqlite.db.querybuilder import QueryBuilder
+from pyqlite.model import BaseModel
 
 
 class DB:

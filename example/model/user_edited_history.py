@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import ClassVar, List, Optional
+from typing import ClassVar, Optional
 
-from example.model import BaseModel
+from pyqlite.model import BaseModel
 
 
 @dataclass(init=True, eq=True)
