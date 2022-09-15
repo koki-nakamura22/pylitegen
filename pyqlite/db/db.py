@@ -190,10 +190,7 @@ class DB:
             logger.setLevel(self.log_level)
             msg = 'sql executed: ' + sql
             if params is not None:
-                if isinstance(params, dict):
-                    msg += ": " + ", ".join(params.values())
-                else:
-                    msg += ": " + ", ".join(params)
+                msg += f", params: {str(params)}"
             logger.info(msg)
 
         return r
@@ -215,15 +212,14 @@ class DB:
     ###################
     # Transaction
     ###################
+    @classmethod
     @contextlib.contextmanager
     def transaction_scope(
-            self,
+            cls,
+            db_filepath: str,
             isolation_level: IsolationLevel = IsolationLevel.DEFERRED):
-        connection_for_transaction = self.__class__(
-            self.db_filepath,
-            isolation_level
-        )
-        with contextlib.closing(connection_for_transaction) as tran:
+        con = cls(db_filepath, isolation_level)
+        with contextlib.closing(con) as tran:
             try:
                 yield tran
             finally:

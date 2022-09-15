@@ -7,7 +7,7 @@ import pytest
 from pytest import main
 from typing import Final
 
-from pyqlite.db import DB, IsolationLevel, transaction_scope
+from pyqlite.db import DB, IsolationLevel
 from example.model import User, UserEditedHistory, user
 from tests.create_test_db import DBForTestCreator
 
@@ -37,9 +37,8 @@ class TestDB:
     ###################
     @pytest.mark.find
     def test_find_data_found(self):
-        db = DB(db_filepath)
-        db.log_level = INFO
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
+            transaction.log_level = INFO
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
             user2 = User(2, 'TestUser2', '456', 'Japan')
@@ -51,15 +50,13 @@ class TestDB:
 
     @pytest.mark.find
     def test_find_data_not_found(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             found_user = transaction.find(User, 1)
             assert found_user is None
 
     @pytest.mark.find
     def test_find_no_primary_key_model(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user_edited_history = UserEditedHistory(
                 '2022/10/31 10:12:34', 'aaa')
             transaction.insert(user_edited_history)
@@ -73,8 +70,7 @@ class TestDB:
 
     @pytest.mark.find
     def test_find_primary_keys_and_primary_key_values_do_not_match(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
 
@@ -85,8 +81,7 @@ class TestDB:
 
     @pytest.mark.find
     def test_find_not_specified_primary_key_values(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
 
@@ -100,8 +95,7 @@ class TestDB:
     ###################
     @pytest.mark.find_by
     def test_find_by_with_qmark_params_data_found(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
             user2 = User(2, 'TestUser2', '456', 'Japan')
@@ -115,8 +109,7 @@ class TestDB:
 
     @pytest.mark.find_by
     def test_find_by_with_qmark_params_data_not_found(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
 
@@ -127,8 +120,7 @@ class TestDB:
 
     @pytest.mark.find_by
     def test_find_by_with_named_params_data_found(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
             user2 = User(2, 'TestUser2', '456', 'Japan')
@@ -144,8 +136,7 @@ class TestDB:
 
     @pytest.mark.find_by
     def test_find_by_with_named_params_data_not_found(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
 
@@ -158,8 +149,7 @@ class TestDB:
 
     @pytest.mark.find_by
     def test_find_by_with_not_specified_where_and_values(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
             user2 = User(2, 'TestUser2', '456', 'Japan')
@@ -171,8 +161,7 @@ class TestDB:
 
     @pytest.mark.find_by
     def test_find_by_with_only_where(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             with pytest.raises(ValueError) as e:
                 transaction.find_by(User, 'address = ?')
             assert str(
@@ -180,8 +169,7 @@ class TestDB:
 
     @pytest.mark.find_by
     def test_find_by_with_only_values(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             params = ['Australia']
             with pytest.raises(ValueError) as e:
                 transaction.find_by(User, params=params)
@@ -193,8 +181,7 @@ class TestDB:
     ###################
     @pytest.mark.where
     def test_where_with_qmark_params_data_found(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
             user2 = User(2, 'TestUser2', '123', 'Japan')
@@ -209,8 +196,7 @@ class TestDB:
 
     @pytest.mark.where
     def test_where_with_qmark_params_data_not_found(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
             user2 = User(2, 'TestUser2', '123', 'Japan')
@@ -225,8 +211,7 @@ class TestDB:
 
     @pytest.mark.where
     def test_where_with_named_params_data_found(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
             user2 = User(2, 'TestUser2', '123', 'Japan')
@@ -243,8 +228,7 @@ class TestDB:
 
     @pytest.mark.where
     def test_where_with_named_params_data_not_found(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
             user2 = User(2, 'TestUser2', '123', 'Japan')
@@ -261,8 +245,7 @@ class TestDB:
 
     @pytest.mark.where
     def test_where_with_not_specified_where_and_values(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
             user2 = User(2, 'TestUser2', '123', 'Japan')
@@ -275,8 +258,7 @@ class TestDB:
 
     @pytest.mark.where
     def test_where_with_only_where(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             with pytest.raises(ValueError) as e:
                 transaction.where(User, 'address = ?')
             assert str(
@@ -284,8 +266,7 @@ class TestDB:
 
     @pytest.mark.where
     def test_where_with_only_values(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             params = ['Australia']
             with pytest.raises(ValueError) as e:
                 transaction.where(User, params=params)
@@ -302,8 +283,7 @@ class TestDB:
 
     @pytest.mark.insert
     def test_insert_duplicate_data(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
 
@@ -314,8 +294,7 @@ class TestDB:
 
     @pytest.mark.insert
     def test_insert_duplicate_data_but_ignore(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
             transaction.insert(user)
@@ -325,8 +304,7 @@ class TestDB:
 
     @pytest.mark.bulk_insert
     def test_bulk_insert_with_all_same_type_model(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             users = [
                 User(1, 'Taro', '123', 'Japan'),
                 User(2, 'Jiro', '456', 'Australia'),
@@ -339,8 +317,7 @@ class TestDB:
 
     @pytest.mark.bulk_insert
     def test_bulk_insert_with_object_not_having_chass_type(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             models = [
                 User(1, 'Taro', '123', 'Japan'),
                 str('test')
@@ -352,8 +329,7 @@ class TestDB:
 
     @pytest.mark.bulk_insert
     def test_bulk_insert_with_diferent_types_models(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             models = [
                 User(1, 'Taro', '123', 'Japan'),
                 UserEditedHistory('2022/10/31 12:34:56')
@@ -365,8 +341,7 @@ class TestDB:
 
     @pytest.mark.bulk_insert
     def test_bulk_insert_duplicate_data(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             users = [
                 User(1, 'Taro', '123', 'Japan'),
                 User(2, 'Jiro', '456', 'Australia'),
@@ -380,8 +355,7 @@ class TestDB:
 
     @pytest.mark.bulk_insert
     def test_bulk_insert_duplicate_data_but_ignore(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user1 = User(1, 'Taro', '123', 'Japan')
             user2 = User(2, 'Jiro', '456', 'Australia')
             user3 = User(2, 'Jiro', '456', 'Australia')
@@ -397,8 +371,7 @@ class TestDB:
     ###################
     @pytest.mark.update
     def test_update_with_qmark_params_and_where(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             user2 = User(2, 'TestUser2', '123', 'Japan')
             users_to_be_insert = [
@@ -424,8 +397,7 @@ class TestDB:
 
     @pytest.mark.update
     def test_update_with_qmark_params_and_no_where(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             users = [
                 User(1, 'TestUser', '123', 'Japan'),
                 User(2, 'TestUser2', '123', 'Japan'),
@@ -445,8 +417,7 @@ class TestDB:
 
     @pytest.mark.update
     def test_update_with_named_params_and_where(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             user2 = User(2, 'TestUser2', '123', 'Japan')
             users_to_be_insert = [
@@ -472,8 +443,7 @@ class TestDB:
 
     @pytest.mark.update
     def test_update_with_named_params_and_no_where(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             users = [
                 User(1, 'TestUser', '123', 'Japan'),
                 User(2, 'TestUser2', '123', 'Japan'),
@@ -498,8 +468,7 @@ class TestDB:
 
     @pytest.mark.update
     def test_update_with_only_where(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             with pytest.raises(ValueError) as e:
                 transaction.update(User, {'name': 'TestUser'}, 'id = ?')
             assert str(
@@ -507,8 +476,7 @@ class TestDB:
 
     @pytest.mark.update
     def test_update_with_only_condition(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             with pytest.raises(ValueError) as e:
                 transaction.update(
                     User, {
@@ -524,8 +492,7 @@ class TestDB:
 
     @pytest.mark.update_by_model
     def test_update_by_model_with_pk(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
 
@@ -542,8 +509,7 @@ class TestDB:
 
     @pytest.mark.update_by_model
     def test_update_by_model_with_no_pk(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user_edited_history = UserEditedHistory(
                 '2022/10/31 10:12:34', 'note')
             transaction.insert(user_edited_history)
@@ -564,8 +530,7 @@ class TestDB:
     ###################
     @pytest.mark.delete
     def test_delete_with_qmark_params_and_where(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
 
@@ -581,8 +546,7 @@ class TestDB:
 
     @pytest.mark.delete
     def test_delete_with_qmark_params_and_no_where(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             users = [
                 User(1, 'TestUser', '123', 'Japan'),
                 User(2, 'TestUser2', '123', 'Japan'),
@@ -601,8 +565,7 @@ class TestDB:
 
     @pytest.mark.delete
     def test_delete_with_named_params_and_where(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
 
@@ -628,8 +591,7 @@ class TestDB:
 
     @pytest.mark.delete
     def test_delete_by_with_only_where(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             with pytest.raises(ValueError) as e:
                 transaction.delete(User, 'address = ?')
             assert str(
@@ -637,8 +599,7 @@ class TestDB:
 
     @pytest.mark.delete
     def test_delete_with_only_condition(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             params = ['Australia']
             with pytest.raises(ValueError) as e:
                 transaction.delete(User, params=params)
@@ -647,8 +608,7 @@ class TestDB:
 
     @pytest.mark.delete_by_model
     def test_delete_by_model_with_pk(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user = User(1, 'TestUser', '123', 'Japan')
             transaction.insert(user)
 
@@ -662,8 +622,7 @@ class TestDB:
 
     @pytest.mark.delete_by_model
     def test_delete_by_model_with_no_pk(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             user_edited_history = UserEditedHistory(
                 '2022/10/31 10:12:34', 'note')
             user_edited_histories = [
@@ -719,29 +678,27 @@ class TestDB:
     ###################
     @pytest.mark.transaction
     def test_transaction_with_no_commits(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             transaction.insert(User(1, 'TestUser', '123', 'Japan'))
 
             user_on_tran = transaction.find(User, 1)
             assert user_on_tran is not None
 
             # Cannot get data that was inserted on other transaction
-            with db.transaction_scope() as transaction2:
+            with DB.transaction_scope(db_filepath) as transaction2:
                 user_on_tran = transaction2.find(User, 1)
                 assert user_on_tran is None
 
     @pytest.mark.transaction
     def test_transaction_with_commits(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             transaction.insert(User(1, 'TestUser', '123', 'Japan'))
 
             user_on_tran = transaction.find(User, 1)
             assert user_on_tran is not None
             transaction.commit()
 
-        with db.transaction_scope() as transaction2:
+        with DB.transaction_scope(db_filepath) as transaction2:
             # Data that was inserted on other transaction can be got
             user_on_tran = transaction2.find(User, 1)
             assert user_on_tran is not None
@@ -752,26 +709,22 @@ class TestDB:
 
     @pytest.mark.transaction
     def test_transaction_isolation_level_set_default(self):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             assert transaction.con.isolation_level == 'DEFERRED'
 
     @pytest.mark.transaction
     def test_transaction_isolation_level_set_deferred(self):
-        db = DB(db_filepath)
-        with db.transaction_scope(IsolationLevel.DEFERRED) as transaction:
+        with DB.transaction_scope(db_filepath, IsolationLevel.DEFERRED) as transaction:
             assert transaction.con.isolation_level == 'DEFERRED'
 
     @pytest.mark.transaction
     def test_transaction_isolation_level_set_immediate(self):
-        db = DB(db_filepath)
-        with db.transaction_scope(IsolationLevel.IMMEDIATE) as transaction:
+        with DB.transaction_scope(db_filepath, IsolationLevel.IMMEDIATE) as transaction:
             assert transaction.con.isolation_level == 'IMMEDIATE'
 
     @pytest.mark.transaction
     def test_transaction_isolation_level_set_exclusive(self):
-        db = DB(db_filepath)
-        with db.transaction_scope(IsolationLevel.EXCLUSIVE) as transaction:
+        with DB.transaction_scope(db_filepath, IsolationLevel.EXCLUSIVE) as transaction:
             assert transaction.con.isolation_level == 'EXCLUSIVE'
 
     ###################
@@ -779,8 +732,7 @@ class TestDB:
     ###################
     @pytest.mark.log
     def test_output_sql_executed_log_with_no_params(self, caplog):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             transaction.log_level = INFO
             transaction.where(User)
 
@@ -792,8 +744,7 @@ class TestDB:
 
     @pytest.mark.log
     def test_output_sql_executed_log_with_qmark_params(self, caplog):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             transaction.log_level = INFO
             where = 'name = ? AND address = ?'
             transaction.where(User, where, ['Taro', 'Japan'])
@@ -802,12 +753,11 @@ class TestDB:
             record = caplog.records[0]
             assert record.name == 'DB'
             assert record.levelname == 'INFO'
-            assert record.msg == 'sql executed: SELECT * FROM users WHERE name = ? AND address = ?: Taro, Japan'
+            assert record.msg == "sql executed: SELECT * FROM users WHERE name = ? AND address = ?, params: ['Taro', 'Japan']"
 
     @pytest.mark.log
     def test_output_sql_executed_log_with_named_params(self, caplog):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             transaction.log_level = INFO
             where = 'name = :name AND address = :address'
             transaction.where(
@@ -818,7 +768,7 @@ class TestDB:
             record = caplog.records[0]
             assert record.name == 'DB'
             assert record.levelname == 'INFO'
-            assert record.msg == 'sql executed: SELECT * FROM users WHERE name = :name AND address = :address: Taro, Japan'
+            assert record.msg == "sql executed: SELECT * FROM users WHERE name = :name AND address = :address, params: {'name': 'Taro', 'address': 'Japan'}"
 
     @pytest.mark.log
     @pytest.mark.skip(reason="This test is already done at test_output_sql_executed_log_with_no_params and test_output_sql_executed_log_with_params.")
@@ -827,8 +777,7 @@ class TestDB:
 
     @pytest.mark.log
     def test_not_output_sql_executed_log_with_log_level_warning(self, caplog):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             transaction.log_level = WARNING
             transaction.where(User)
 
@@ -836,8 +785,7 @@ class TestDB:
 
     @pytest.mark.log
     def test_not_output_sql_executed_log_with_log_level_none(self, caplog):
-        db = DB(db_filepath)
-        with db.transaction_scope() as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             transaction.log_level = None
             transaction.where(User)
 
@@ -855,7 +803,7 @@ class TestDB:
 
     @pytest.mark.log
     def test_output_bulk_insert_ignore_log_with_log_level_info(self, caplog):
-        with transaction_scope(db_filepath) as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             transaction.log_level = INFO
             users = self.__create_bulk_insert_data()
             inserted_row_count = transaction.bulk_insert(users)
@@ -871,7 +819,7 @@ class TestDB:
 
     @pytest.mark.log
     def test_output_bulk_insert_log_with_log_level_warning(self, caplog):
-        with transaction_scope(db_filepath) as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             transaction.log_level = WARNING
             users = self.__create_bulk_insert_data()
             transaction.bulk_insert(users)
@@ -880,7 +828,7 @@ class TestDB:
 
     @pytest.mark.log
     def test_output_bulk_insert_log_with_log_level_none(self, caplog):
-        with transaction_scope(db_filepath) as transaction:
+        with DB.transaction_scope(db_filepath) as transaction:
             transaction.log_level = None
             users = self.__create_bulk_insert_data()
             transaction.bulk_insert(users)
