@@ -5,6 +5,7 @@ from sqlite3 import Connection
 from typing import Final, List, Optional, Type, Union
 
 import pyqlite.log
+from pyqlite.db.isolation_level import IsolationLevel
 from pyqlite.db.querybuilder import QueryBuilder
 from pyqlite.model import BaseModel
 
@@ -12,9 +13,13 @@ from pyqlite.model import BaseModel
 class DB:
     log_level: Optional[int] = None
 
-    def __init__(self, db_filepath: str) -> None:
+    def __init__(
+            self,
+            db_filepath: str,
+            isolation_level: IsolationLevel = IsolationLevel.DEFERRED) -> None:
         self.db_filepath: Final[str] = db_filepath
-        self.con: Final[Connection] = sqlite3.connect(db_filepath)
+        self.con: Final[Connection] = sqlite3.connect(
+            db_filepath, isolation_level=isolation_level.value)
 
     def commit(self):
         self.con.commit()
@@ -197,8 +202,13 @@ class DB:
     # Transaction
     ###################
     @contextlib.contextmanager
-    def transaction_scope(self):
-        connection_for_transaction = self.__class__(self.db_filepath)
+    def transaction_scope(
+            self,
+            isolation_level: IsolationLevel = IsolationLevel.DEFERRED):
+        connection_for_transaction = self.__class__(
+            self.db_filepath,
+            isolation_level
+        )
         with contextlib.closing(connection_for_transaction) as tran:
             try:
                 yield tran
