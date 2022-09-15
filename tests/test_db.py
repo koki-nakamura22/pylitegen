@@ -7,8 +7,8 @@ import pytest
 from pytest import main
 from typing import Final
 
-from pyqlite.db import DB, IsolationLevel
-from example.model import User, UserEditedHistory
+from pyqlite.db import DB, IsolationLevel, transaction_scope
+from example.model import User, UserEditedHistory, user
 from tests.create_test_db import DBForTestCreator
 
 currnet_dir: Final[str] = os.path.dirname(__file__)
@@ -746,6 +746,10 @@ class TestDB:
             user_on_tran = transaction2.find(User, 1)
             assert user_on_tran is not None
 
+            # For subsequent tests
+            transaction2.delete(User)
+            transaction2.commit()
+
     @pytest.mark.transaction
     def test_transaction_isolation_level_set_default(self):
         db = DB(db_filepath)
@@ -836,6 +840,50 @@ class TestDB:
         with db.transaction_scope() as transaction:
             transaction.log_level = None
             transaction.where(User)
+
+            assert len(caplog.records) == 0
+
+    def __create_bulk_insert_data(self):
+        data_list = list()
+        for n in range(3):
+            i = n + 1
+            data_list.append(
+                (User(i, f"TestUser{i}", f"phone{i}"))
+            )
+        data_list[1].address = 'test address'
+        return data_list
+
+    @pytest.mark.log
+    def test_output_bulk_insert_ignore_log_with_log_level_info(self, caplog):
+        with transaction_scope(db_filepath) as transaction:
+            transaction.log_level = INFO
+            users = self.__create_bulk_insert_data()
+            inserted_row_count = transaction.bulk_insert(users)
+            assert inserted_row_count == 3
+
+            assert len(caplog.records) == 1
+            record = caplog.records[0]
+            assert record.name == 'DB'
+            assert record.levelname == 'INFO'
+            expected_msg = 'sql executed: INSERT OR IGNORE INTO users VALUES (:id, :name, :phone, :address)'
+            expected_msg += ", params: {'id': 1, 'name': 'TestUser1', 'phone': 'phone1', 'address': None}, {'id': 2, 'name': 'TestUser2', 'phone': 'phone2', 'address': 'test address'}, {'id': 3, 'name': 'TestUser3', 'phone': 'phone3', 'address': None}"
+            assert record.msg == expected_msg
+
+    @pytest.mark.log
+    def test_output_bulk_insert_log_with_log_level_warning(self, caplog):
+        with transaction_scope(db_filepath) as transaction:
+            transaction.log_level = WARNING
+            users = self.__create_bulk_insert_data()
+            transaction.bulk_insert(users)
+
+            assert len(caplog.records) == 0
+
+    @pytest.mark.log
+    def test_output_bulk_insert_log_with_log_level_none(self, caplog):
+        with transaction_scope(db_filepath) as transaction:
+            transaction.log_level = None
+            users = self.__create_bulk_insert_data()
+            transaction.bulk_insert(users)
 
             assert len(caplog.records) == 0
 

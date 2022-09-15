@@ -66,10 +66,10 @@ class TestQueryBuilder:
             User(3, 'Saburo', '789', 'USA')
         ]
         sql, param_list = QueryBuilder.build_bulk_insert(users)
-        assert sql == 'INSERT OR IGNORE INTO users VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)'
+        assert sql == 'INSERT OR IGNORE INTO users VALUES (:id, :name, :phone, :address)'
         param_list_for_testing = []
         for u in users:
-            param_list_for_testing.extend(u.values)
+            param_list_for_testing.append(u.to_dict())
         assert param_list == param_list_for_testing
 
     @pytest.mark.build_bulk_insert
@@ -80,10 +80,10 @@ class TestQueryBuilder:
             User(3, 'Saburo', '789', 'USA')
         ]
         sql, param_list = QueryBuilder.build_bulk_insert(users, False)
-        assert sql == 'INSERT INTO users VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)'
+        assert sql == 'INSERT INTO users VALUES (:id, :name, :phone, :address)'
         param_list_for_testing = []
         for u in users:
-            param_list_for_testing.extend(u.values)
+            param_list_for_testing.append(u.to_dict())
         assert param_list == param_list_for_testing
 
     ###################

@@ -63,13 +63,16 @@ class QueryBuilder:
         params_str = '?, ' * len(models[0].member_names)
         params_str = params_str.rstrip().rstrip(',')
         or_ignore_str = " OR IGNORE" if insert_or_ignore else ''
-        sql = f"INSERT{or_ignore_str} INTO {models[0].table_name} VALUES "
-        sql += f"({params_str}), " * len(models)
-        sql = sql.rstrip().rstrip(',')
+
+        sql = f"INSERT{or_ignore_str} INTO {models[0].table_name} VALUES ("
+        for member_name in models[0].member_names:
+            sql += f":{member_name}, "
+        sql = re.sub(', $', ')', sql)
 
         param_list = []
         for model in models:
-            param_list.extend(model.values)
+            param_list.append(model.to_dict())
+
         return sql, param_list
 
     ###################
