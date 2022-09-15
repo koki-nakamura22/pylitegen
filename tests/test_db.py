@@ -7,7 +7,7 @@ import pytest
 from pytest import main
 from typing import Final
 
-from pyqlite.db import DB
+from pyqlite.db import DB, IsolationLevel
 from example.model import User, UserEditedHistory
 from tests.create_test_db import DBForTestCreator
 
@@ -692,6 +692,29 @@ class TestDB:
             assert len(found_histories) == 2
 
     ###################
+    # Isolation Level
+    ###################
+    @pytest.mark.db_isolation_level
+    def test_db_init_isolation_level_set_default(self):
+        db = DB(db_filepath)
+        assert db.con.isolation_level == 'DEFERRED'
+
+    @pytest.mark.db_isolation_level
+    def test_db_init_isolation_level_set_deferred(self):
+        db = DB(db_filepath, isolation_level=IsolationLevel.DEFERRED)
+        assert db.con.isolation_level == 'DEFERRED'
+
+    @pytest.mark.db_isolation_level
+    def test_db_init_isolation_level_set_immediate(self):
+        db = DB(db_filepath, IsolationLevel.IMMEDIATE)
+        assert db.con.isolation_level == 'IMMEDIATE'
+
+    @pytest.mark.db_isolation_level
+    def test_db_init_isolation_level_set_exclusive(self):
+        db = DB(db_filepath, IsolationLevel.EXCLUSIVE)
+        assert db.con.isolation_level == 'EXCLUSIVE'
+
+    ###################
     # Transaction
     ###################
     @pytest.mark.transaction
@@ -722,6 +745,30 @@ class TestDB:
             # Data that was inserted on other transaction can be got
             user_on_tran = transaction2.find(User, 1)
             assert user_on_tran is not None
+
+    @pytest.mark.transaction
+    def test_transaction_isolation_level_set_default(self):
+        db = DB(db_filepath)
+        with db.transaction_scope() as transaction:
+            assert transaction.con.isolation_level == 'DEFERRED'
+
+    @pytest.mark.transaction
+    def test_transaction_isolation_level_set_deferred(self):
+        db = DB(db_filepath)
+        with db.transaction_scope(IsolationLevel.DEFERRED) as transaction:
+            assert transaction.con.isolation_level == 'DEFERRED'
+
+    @pytest.mark.transaction
+    def test_transaction_isolation_level_set_immediate(self):
+        db = DB(db_filepath)
+        with db.transaction_scope(IsolationLevel.IMMEDIATE) as transaction:
+            assert transaction.con.isolation_level == 'IMMEDIATE'
+
+    @pytest.mark.transaction
+    def test_transaction_isolation_level_set_exclusive(self):
+        db = DB(db_filepath)
+        with db.transaction_scope(IsolationLevel.EXCLUSIVE) as transaction:
+            assert transaction.con.isolation_level == 'EXCLUSIVE'
 
     ###################
     # Log
