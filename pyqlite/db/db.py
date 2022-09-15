@@ -109,7 +109,7 @@ class DB:
 
         sql, param_list = QueryBuilder.build_bulk_insert(
             models, insert_or_ignore)
-        return self.execute(sql, param_list).rowcount
+        return self.executemany(sql, param_list).rowcount
 
     ###################
     # Update
@@ -194,6 +194,20 @@ class DB:
                     msg += ": " + ", ".join(params.values())
                 else:
                     msg += ": " + ", ".join(params)
+            logger.info(msg)
+
+        return r
+
+    def executemany(self, sql: str, param_list: List):
+        r = self.con.executemany(sql, param_list)
+
+        if self.log_level is not None:
+            logger = getLogger(self.__class__.__name__)
+            logger.setLevel(self.log_level)
+            msg = f"sql executed: {sql}, params: "
+            for param in param_list:
+                msg += f"{str(param)}, "
+            msg = msg.rstrip().rstrip(',')
             logger.info(msg)
 
         return r
