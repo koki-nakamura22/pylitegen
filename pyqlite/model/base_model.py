@@ -6,7 +6,12 @@ from typing import ClassVar, Dict, Final, List, Type
 
 @dataclass()
 class BaseModel(ABC):
+    """Base for model classes used by the user
+    """
+
     def __post_init__(self):
+        """Init data class funciton
+        """
         self.__set_cache()
 
     #############
@@ -18,11 +23,20 @@ class BaseModel(ABC):
         compare=False)
 
     def __set_cache(self) -> None:
+        """Set cache for update
+        """
         members = self.members
         for k in members:
             self._BaseModel__cache[k] = members[k]  # type: ignore
 
     def __get_data_to_be_updated(self) -> dict:
+        """Get data to be updated for update.
+
+        Returns
+        -------
+        dict
+            Data to be updated
+        """
         data_to_be_updated = dict()
         members = self.members
         for k in members:
@@ -36,10 +50,19 @@ class BaseModel(ABC):
     #############
     @classmethod
     def get_class_type(cls) -> Type:
+        """Get model class type.
+
+        Returns
+        -------
+        Type
+            Model class type
+        """
         return cls
 
     @property
     def class_type(self) -> Type:
+        """Model class type
+        """
         return self.__class__
     #############
 
@@ -50,10 +73,19 @@ class BaseModel(ABC):
 
     @classmethod
     def get_table_name(cls) -> str:
+        """Get table name.
+
+        Returns
+        -------
+        str
+            Table name
+        """
         return getattr(cls, f"_{cls.__name__}__table_name")
 
     @property
     def table_name(self) -> str:
+        """Table name
+        """
         return self.__class__.get_table_name()
     #############
 
@@ -62,6 +94,13 @@ class BaseModel(ABC):
     #############
     @classmethod
     def get_pks(cls) -> List[str]:
+        """Get primary key names.
+
+        Returns
+        -------
+        List[str]
+            Primary key names
+        """
         if not hasattr(cls, '__pks'):
             pks = list()
             for k, v in cls.__annotations__.items():
@@ -74,6 +113,8 @@ class BaseModel(ABC):
 
     @property
     def pks(self) -> List[str]:
+        """Primary key names
+        """
         return self.__class__.get_pks()
     #############
 
@@ -82,6 +123,8 @@ class BaseModel(ABC):
     #############
     @property
     def members(self) -> Dict:
+        """Model members dict("name": value)
+        """
         excludes = ['_BaseModel__cache']
         members = copy.deepcopy(vars(self))
         for keyword in excludes:
@@ -90,6 +133,13 @@ class BaseModel(ABC):
 
     @classmethod
     def get_member_names(cls) -> List[str]:
+        """Get model members names.
+
+        Returns
+        -------
+        List[str]
+            Model members names
+        """
         member_names = list()
         for k, v in cls.__annotations__.items():
             if not hasattr(v, '__origin__'):
@@ -100,12 +150,23 @@ class BaseModel(ABC):
 
     @property
     def member_names(self) -> List[str]:
+        """Model members names
+        """
         return list(self.members.keys())
 
     @property
     def values(self) -> List:
+        """Model members values
+        """
         return list(self.members.values())
 
     def to_dict(self) -> dict:
+        """Convert model data to dict.
+
+        Returns
+        -------
+        dict
+            Converted model data as dict
+        """
         return self.members
     #############
