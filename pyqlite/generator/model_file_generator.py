@@ -10,12 +10,26 @@ from pyqlite.generator.column import Column
 
 
 class ModelFileGenerator:
+    """ModelFileGenerator
+    """
+
     @classmethod
     def generate(
             cls,
             table_name: str,
             columns: List[Column],
             output_path: str):
+        """Generate model files by database metadata.
+
+        Parameters
+        ----------
+        table_name : str
+            The target table name
+        columns : List[Column]
+            Columns data from the target table
+        output_path : str
+            Model files output path
+        """
         exists_any_type = False
         is_use_pk = False
         is_use_optional = False

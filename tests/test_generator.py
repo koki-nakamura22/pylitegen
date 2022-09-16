@@ -24,7 +24,7 @@ class TestColumn:
         db_creator = DBForTestCreator(currnet_dir)
         db_creator.create()
 
-        Generator.generate(db_filepath, output_path)
+        Generator.generate_model_files(db_filepath, output_path)
 
         if not os.path.exists(expected_files_path):
             os.makedirs(expected_files_path)
