@@ -29,7 +29,7 @@ def main() -> int:
             output_path = os.getcwd()
         else:
             output_path = args.output_path
-        Generator.generate(args.db_path, output_path)
+        Generator.generate_model_files(args.db_path, output_path)
         return 0
 
     except Exception as e:
