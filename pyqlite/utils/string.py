@@ -10,5 +10,17 @@ def __parse_words(string: str) -> Iterator[str]:
 
 
 def to_pascal_case(string: str) -> str:
+    """Convert string to pascal case string.
+
+    Parameters
+    ----------
+    string : str
+        The convert target string
+
+    Returns
+    -------
+    str
+        Conerted pascal case string
+    """
     words_iter = __parse_words(string)
     return "".join(word.capitalize() for word in words_iter)
