@@ -172,7 +172,7 @@ class TestDB:
         with DB.transaction_scope(db_filepath) as transaction:
             params = ['Australia']
             with pytest.raises(ValueError) as e:
-                transaction.find_by(User, params=params)
+                transaction.find_by(User, where_params=params)
             assert str(
                 e.value) == 'Both where and values must be passed, or not passed both'
 
@@ -269,7 +269,7 @@ class TestDB:
         with DB.transaction_scope(db_filepath) as transaction:
             params = ['Australia']
             with pytest.raises(ValueError) as e:
-                transaction.where(User, params=params)
+                transaction.where(User, where_params=params)
             assert str(
                 e.value) == 'Both where and values must be passed, or not passed both'
 
@@ -480,7 +480,7 @@ class TestDB:
             with pytest.raises(ValueError) as e:
                 transaction.update(
                     User, {
-                        'name': 'TestUser'}, params={
+                        'name': 'TestUser'}, where_params={
                         'id': 1})
             assert str(
                 e.value) == 'Both where and values must be passed, or not passed both'
@@ -602,7 +602,7 @@ class TestDB:
         with DB.transaction_scope(db_filepath) as transaction:
             params = ['Australia']
             with pytest.raises(ValueError) as e:
-                transaction.delete(User, params=params)
+                transaction.delete(User, where_params=params)
             assert str(
                 e.value) == 'Both where and values must be passed, or not passed both'
 
